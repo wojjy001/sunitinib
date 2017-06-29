@@ -12,6 +12,7 @@
   library(plyr)  # Split and rearrange data, ddply function
   library(dplyr)  # New plyr
   library(mrgsolve) # Metrum differential equation solver for pharmacometrics
+  library(reshape)	# melt function
 # Set the working directory
   dir <- "/Volumes/Prosecutor/sunitinib/PopPKPDModels/"
   setwd(dir)
@@ -34,13 +35,13 @@
 # Simulation seed for reproducible numbers
   set.seed(123456)
 # Number of individuals to simulate
-  nsim <- 10
+  nsim <- 100
   ID.seq <- 1:nsim
 # Random effects
   ETA.matrix <- mvrnorm(nsim,mu = rep(0,times = dim(OMEGA)[1]),OMEGA) %>%
   as.data.frame
 # Time sequence
-  times <- seq(from = 0,to = 18*7*24,by = 24)
+  times <- seq(from = 0,to = 2016,by = 24)
 # Dosing and dosing times
   DOSE <- 50
   on.times <- c(seq(from = 24,to = 672,by = 24),
@@ -66,13 +67,21 @@
   sim.data <- mod %>% mrgsim(data = input.data) %>% as.data.frame
 
 # ------------------------------------------------------------------------------
+# Rearrange data frame for plotting
+  melt.data <- melt(sim.data,id = c("ID","time","DOSE","CL"),
+    measure = c("IPRE_VEGF","IPRE_VEGFR2","IPRE_VEGFR3","IPRE_SKIT"))
+    
 # Plot
   plotobj <- NULL
-  plotobj <- ggplot(sim.data)
-  plotobj <- plotobj + geom_line(aes(x = time/7/24,y = IPRE_VEGF))
-  plotobj <- plotobj + scale_y_log10("\nVEGF (pg/mL)",
-    breaks = c(0.1,1,10,100),labels = c(0.1,1,10,100))
+  plotobj <- ggplot(melt.data)
+  plotobj <- plotobj + stat_summary(aes(x = time/7/24,y = value),
+    geom = "line",fun.y = median,colour = "red")
+  plotobj <- plotobj + stat_summary(aes(x = time/7/24,y = value),
+    geom = "ribbon",fun.ymin = CI95lo,fun.ymax = CI95hi,
+    fill = "red",alpha = 0.3)
+  plotobj <- plotobj + scale_y_log10("\nBiomarker (pg/mL)",
+    breaks = c(0.1,1,10,100),labels = c(0.1,1,10,100),lim = c(1,NA))
   plotobj <- plotobj + scale_x_continuous("Time (weeks)\n",
     breaks = seq(from = 0,to = 18,by = 2))
-  plotobj <- plotobj + facet_wrap(~ID)
+  plotobj <- plotobj + facet_wrap(~variable)
   plotobj

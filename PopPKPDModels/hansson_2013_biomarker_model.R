@@ -150,8 +150,11 @@ $ODE		// Differential equations
         dxdt_SKIT = KINS*(1-EFFS)-KOUTS*SKIT;
 
 $TABLE 	double IPRE_VEGF = log(VEGF);
+        double IPRE_VEGFR2 = log(VEGFR2);
+        double IPRE_VEGFR3 = log(VEGFR3);
+        double IPRE_SKIT = log(SKIT);
 
-$CAPTURE DOSE CL IPRE_VEGF
+$CAPTURE DOSE CL IPRE_VEGF IPRE_VEGFR2 IPRE_VEGFR3 IPRE_SKIT
 '
 # Compile the model code
   mod <- mcode("popVEGF",code)
