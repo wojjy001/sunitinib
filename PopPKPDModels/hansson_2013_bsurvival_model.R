@@ -69,7 +69,7 @@ $ODE			// VEGFR3
           if (SOLVERTIME > 4) dxdt_DROPOUT = pow(LAMBD*ALPHD*SOLVERTIME,ALPHD-1);
 
 $TABLE		double iVEGFR3 = VEGFR3;	// VEGFR3 time-course
-          double iRBM03	= (VEGFR3-BM03)/BM03;	// Relative changei n VEGFR3 from baseline
+          double iRBM03	= (VEGFR3-BM03)/BM03;	// Relative change in VEGFR3 from baseline
           double CHZ = SURVIVAL;	// Cumulative hazard for survival
           double CHZD = DROPOUT;	// Cumulative hazard for drop out
           double SUR = exp(-CHZ);	// Probability of survival
