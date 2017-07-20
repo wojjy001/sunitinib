@@ -4,8 +4,8 @@
 # ------------------------------------------------------------------------------
 # Population characteristics
 # Number of individuals to simulate
-  nid <- 2000
-  nsim <- 100
+  nid <- 1000
+  nsim <- 1
   ntotal <- nid*nsim
   SIM.seq <- rep(1:nsim,times = nid) %>% sort
   ID.seq <- rep(1:nid,times = nsim)
@@ -22,7 +22,7 @@
 # Pharmacokinetics
 # Simulation times (hours)
   end.pk.time <- nweeks*24*7	# end simulation time
-  pk.increment <- 24 # concentration collection times
+  pk.increment <- 1 # concentration collection times
   pk.times <- seq(from = 0,to = end.pk.time,by = pk.increment) # hours
 
 # ------------------------------------------------------------------------------
