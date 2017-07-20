@@ -11,9 +11,9 @@
   source(paste0(global.dir,"ModelFiles/yu_2015_sunitinib_model.R"))	# PK model
 # Define simulation file directory
   sim.dir <- paste0(global.dir,"SimulationFiles/")
-  source(paste0(sim.dir,"trough_auc_simulation_options.R"))	# Simulation options
+  source(paste0(sim.dir,"trough_TDM_simulation_options.R"))	# Simulation options
 # Define output directory
-  output.dir <- paste0(global.dir,"Output/TroughAUCSimulation/")
+  output.dir <- paste0(global.dir,"Output/TroughTDMSimulation/")
 # Set the working directory
   setwd(output.dir)
 
@@ -30,7 +30,7 @@
   }
 
 # ------------------------------------------------------------------------------
-# Perform PK simulations
+# Perform initial PK simulations (first week)
 # Input data frame for simulation
   pk.ID.data <- data.frame(SIM = SIM.seq,ID = ID.seq,WT,pk.ETA.matrix)
   input.pk.data <- lapply(pk.ID.data,rep.int,times = length(pk.times)) %>%
@@ -43,15 +43,73 @@
   input.pk.data$evid <- 0
   input.pk.data$evid[input.pk.data$time %in% on.times] <- 1
 # Simulate
-  pk.data <- pk.mod %>% mrgsim(data = input.pk.data,
+  initial.pk.data <- pk.mod %>% mrgsim(data = input.pk.data,
     carry.out = c("SIM","amt")) %>%
     as.data.frame
-# Calculate 24-hour AUCs (of the combined parent and metabolite)
-  pk.data <- ddply(pk.data, .(SIM,ID), auc24.function, .progress = "text")
+
+# ------------------------------------------------------------------------------
+# Simulate standard TDM scenario
+  standard.tdm <- function(initial.pk.data) {
+  # Initiate a vector of sample times
+    sample.times <- c(168)
+  # Sampling frequency
+    sample.freq <- 24	# hours
+  # Define therapeutic window
+    trough.target <- 0.1	# mg/L
+    # auc.target <- 1.38	# mg*h/L
+  # Make all predicted concentration (IPRE) after the first week (t = 168 hours)
+  # become NA.  These will be filled with simulated concentrations during each
+  # loop.
+    pk.data <- initial.pk.data
+    pk.data <- auc24.function(pk.data)
+    pk.data$IPRE[pk.data$time > max(sample.times)] <- NA
+
+  # Simulate concentrations until the last time-point IPRE is no longer NA
+    repeat {
+    # Call information from previous dosing interval
+      last.sample <- max(sample.times)	# Time of most recent sample
+      prev.dose <- pk.data$amt[pk.data$time == last.sample-24]	# Previous dose
+    # Calculate next dose based on information from previous dosing interval
+      prev.IPRE <- pk.data$IPRE[pk.data$time == last.sample]	# Previous sampled conc
+      if (prev.IPRE != trough.target) {
+        next.dose <- trough.target/prev.IPRE*prev.dose
+      } else {
+        next.dose <- prev.dose
+      }
+      # prev.AUC24 <- pk.data$AUC24[pk.data$time == last.sample]	# Previous interval's AUC
+      # if (prev.AUC24 != auc.target) {
+      #   next.dose <- auc.target/prev.AUC24*prev.dose
+      # } else {
+      #   next.dose <- prev.dose
+      # }
+    # Input next.dose for simulation
+      input.pk.data <- pk.data
+      input.pk.data$amt[input.pk.data$time == last.sample] <- next.dose
+      # Re-add evid and rate columns
+        input.pk.data$cmt <- 1
+        input.pk.data$evid <- 0
+        input.pk.data$evid[input.pk.data$time %in% on.times] <- 1
+    # Simulate concentrations
+      pk.data <- pk.mod %>% mrgsim(data = input.pk.data,
+        carry.out = c("SIM","amt")) %>% as.data.frame
+    # Add the next sample time to the list of sample times
+      next.sample <- last.sample + sample.freq
+      sample.times <- sort(c(unique(c(sample.times,next.sample))))
+    # Make all IPRE after the next sample == NA
+      pk.data <- auc24.function(pk.data)
+      pk.data$IPRE[pk.data$time > max(sample.times)] <- NA
+    # If the last IPRE in the data frame is NA, then continue with the loop
+      if (is.na(pk.data$IPRE[pk.data$time == max(pk.times)]) == FALSE) break
+    }	# repeat
+    pk.data
+  }	# standard.tdm
+
+# Simulate concentrations arising from standard TDM
+  pk.data <- ddply(initial.pk.data, .(SIM,ID), standard.tdm, .progress = "text")
 
 # ------------------------------------------------------------------------------
 # Plot AUC24 versus trough concentration on the last day of 4 weeks treatment
-  last.pk.data <- pk.data[pk.data$time == max(pk.times),]
+  last.pk.data <- pk.data[pk.data$time == 4*7*24,]
 
   plotobj1 <- NULL
   plotobj1 <- ggplot(last.pk.data)
@@ -61,39 +119,51 @@
     linetype = "dashed")
   plotobj1 <- plotobj1 + geom_vline(aes(xintercept = 0.1),
     linetype = "dashed")
-  plotobj1 <- plotobj1 + scale_y_continuous("24-hour AUC (mg*h/L)")
-  plotobj1 <- plotobj1 + scale_x_continuous("Trough Concentration (mg/L)")
+  plotobj1 <- plotobj1 + scale_y_continuous("24-hour AUC (mg*h/L)",
+    lim = c(0,6.5))
+  plotobj1 <- plotobj1 + scale_x_continuous("Trough Concentration (mg/L)",
+    lim = c(0,0.3))
   print(plotobj1)
 
-# Subset the data to only include trough concentrations within the therapeutic
-# range (0.05 - 0.1 mg/L)
-  thera.pk.data <- last.pk.data[last.pk.data$IPRE >= 0.05 &
-    last.pk.data$IPRE <= 0.1,]
-  length(unique(thera.pk.data$ID))
-# What is the minimum AUC when trough is in the therapeutic range?
-  min.AUC24 <- min(thera.pk.data$AUC24)
-  print(min.AUC24)
-# What is the maximum AUC when trough is in the therapeutic range?
-  max.AUC24 <- max(thera.pk.data$AUC24)
-  print(max.AUC24)
-# Round IPRE to the nearest 0.01
-  thera.pk.data$rIPRE <- round(thera.pk.data$IPRE,digits = 2)
-# What are the range of AUCs when rIPRE == 0.05
-  summary.AUC24.lowIPRE <- summary.function(
-    thera.pk.data$AUC24[thera.pk.data$rIPRE == 0.05])
-  print(summary.AUC24.lowIPRE)
-# What are the range of AUCs when rIPRE == 0.1
-  summary.AUC24.highIPRE <- summary.function(
-    thera.pk.data$AUC24[thera.pk.data$rIPRE == 0.1])
-  print(summary.AUC24.highIPRE)
+# Plot IPRE in the last dosing interval
+  last.dose.pk.data <- pk.data[pk.data$time >= 4*7*24-24 &
+    pk.data$time <= 4*7*24,]
+  interval.times <- unique(last.dose.pk.data$time)
+  unique.ID <- rep(1:ntotal,times = length(interval.times)) %>% sort
+  last.dose.pk.data$uID <- unique.ID
+
+  last.dose.pk.data$WTf <- "< 70 kg"
+  last.dose.pk.data$WTf[last.dose.pk.data$WT >= 70] <- ">= 70 kg"
+  last.dose.pk.data$WTf <- as.factor(last.dose.pk.data$WTf)
+
+  plotobj2 <- NULL
+  plotobj2 <- ggplot(last.dose.pk.data)
+  plotobj2 <- plotobj2 + geom_line(aes(x = time,y = IPRE,group = uID,
+    colour = WTf),
+    alpha = 0.3)
+  plotobj2 <- plotobj2 + geom_hline(aes(yintercept = 0.05),
+    linetype = "dashed")
+  plotobj2 <- plotobj2 + geom_hline(aes(yintercept = 0.1),
+    linetype = "dashed")
+  plotobj2 <- plotobj2 + scale_y_continuous("Sunitinib Concentration (mg/L)",
+    lim = c(0,0.3))
+  plotobj2 <- plotobj2 + scale_x_continuous("Time Since First Dose (hours)",
+    breaks = seq(from = 648,to = 672,by = 4))
+  plotobj2 <- plotobj2 + theme(legend.position = "none")
+  print(plotobj2)
 
 # ------------------------------------------------------------------------------
-# Save plot and summary statistics
+# Summaries
+  summary.AUC <- summary.function(last.pk.data$AUC24)
+  summary.IPRE <- summary.function(last.pk.data$IPRE)
+  summary.amt <- summary.function(pk.data$amt[pk.data$time == 4*7*24-24])
+
+# ------------------------------------------------------------------------------
+# Save plots and summary statistics
 # Plot
   ggsave(plot = plotobj1,
-    filename = "week4_auc_versus_trough.png",
-    dpi = 300)
-# Summary statistics
-  summary.list <- list("AUC24 when IPRE == 0.05" = summary.AUC24.lowIPRE,
-    "AUC24 when IPRE == 0.1" = summary.AUC24.highIPRE)
-  capture.output(summary.list,file = "week4_auc_versus_trough_summary.txt")
+    filename = "week4_auc_vs_trough_TDM.png",
+    dpi = 300,height = 5,width = 7)
+  ggsave(plot = plotobj2,
+    filename = "week4_IPRE_vs_time_TDM.png",
+    dpi = 300,height = 5,width = 7)
