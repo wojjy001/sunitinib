@@ -30,6 +30,25 @@
     pk.ETA.matrix <- data.frame(ETACLP = 0,ETAVCP = 0,ETACLM = 0,ETAVCM = 0)
   }
 
+# Plot matrix of random effects
+  plotmatrix <- ggpairs(data = pk.ETA.matrix,
+    columnLabels = c("Parent Clearance","Parent Central Volume",
+    "Metabolite Clearance","Metabolite Central Volume"),
+    lower = list(
+      continuous = wrap("points",alpha = 0.3,colour = "blue",shape = 1)
+    ),
+    upper = list(
+      continuous = wrap("cor",colour = "black")
+    ),
+    diag = list(
+      continuous = wrap("densityDiag",colour = "red")
+    )
+  )
+  print(plotmatrix)
+  ggsave(plot = plotmatrix,
+    filename = "pk_model_correlations.png",
+    dpi = 300,height = 9,width = 9)
+
 # ------------------------------------------------------------------------------
 # Perform PK simulations
 # Input data frame for simulation
@@ -52,7 +71,7 @@
 
 # ------------------------------------------------------------------------------
 # Plot AUC24 versus trough concentration on the last day of 4 weeks treatment
-  last.pk.data <- pk.data[pk.data$time == max(pk.times),]
+  last.pk.data <- pk.data[pk.data$time == 4*7*24,]
 
   plotobj1 <- NULL
   plotobj1 <- ggplot(last.pk.data)
@@ -62,39 +81,71 @@
     linetype = "dashed")
   plotobj1 <- plotobj1 + geom_vline(aes(xintercept = 0.1),
     linetype = "dashed")
-  plotobj1 <- plotobj1 + scale_y_continuous("24-hour AUC (mg*h/L)")
-  plotobj1 <- plotobj1 + scale_x_continuous("Trough Concentration (mg/L)")
+  plotobj1 <- plotobj1 + scale_y_continuous("24-hour AUC (mg*h/L)",
+    lim = c(0,6.5))
+  plotobj1 <- plotobj1 + scale_x_continuous("Trough Concentration (mg/L)",
+    lim = c(0,0.3))
   print(plotobj1)
 
-# Subset the data to only include trough concentrations within the therapeutic
-# range (0.05 - 0.1 mg/L)
-  thera.pk.data <- last.pk.data[last.pk.data$IPRE >= 0.05 &
-    last.pk.data$IPRE <= 0.1,]
-  length(unique(thera.pk.data$ID))
-# What is the minimum AUC when trough is in the therapeutic range?
-  min.AUC24 <- min(thera.pk.data$AUC24)
-  print(min.AUC24)
-# What is the maximum AUC when trough is in the therapeutic range?
-  max.AUC24 <- max(thera.pk.data$AUC24)
-  print(max.AUC24)
-# Round IPRE to the nearest 0.01
-  thera.pk.data$rIPRE <- round(thera.pk.data$IPRE,digits = 2)
-# What are the range of AUCs when rIPRE == 0.05
-  summary.AUC24.lowIPRE <- summary.function(
-    thera.pk.data$AUC24[thera.pk.data$rIPRE == 0.05])
-  print(summary.AUC24.lowIPRE)
-# What are the range of AUCs when rIPRE == 0.1
-  summary.AUC24.highIPRE <- summary.function(
-    thera.pk.data$AUC24[thera.pk.data$rIPRE == 0.1])
-  print(summary.AUC24.highIPRE)
+# Plot IPRE in the last dosing interval
+  last.dose.pk.data <- pk.data[pk.data$time >= 4*7*24-24 &
+    pk.data$time <= 4*7*24,]
+  interval.times <- unique(last.dose.pk.data$time)
+  unique.ID <- rep(1:ntotal,times = length(interval.times)) %>% sort
+  last.dose.pk.data$uID <- unique.ID
+
+  last.dose.pk.data$WTf <- "< 70 kg"
+  last.dose.pk.data$WTf[last.dose.pk.data$WT >= 70] <- ">= 70 kg"
+  last.dose.pk.data$WTf <- as.factor(last.dose.pk.data$WTf)
+
+  plotobj2 <- NULL
+  plotobj2 <- ggplot(last.dose.pk.data)
+  plotobj2 <- plotobj2 + geom_line(aes(x = time,y = IPRE,group = uID,
+    colour = WTf),
+    alpha = 0.3)
+  plotobj2 <- plotobj2 + geom_hline(aes(yintercept = 0.05),
+    linetype = "dashed")
+  plotobj2 <- plotobj2 + geom_hline(aes(yintercept = 0.1),
+    linetype = "dashed")
+  plotobj2 <- plotobj2 + scale_y_continuous("Sunitinib Concentration (mg/L)",
+    lim = c(0,0.3))
+  plotobj2 <- plotobj2 + scale_x_continuous("Time Since First Dose (hours)",
+    breaks = seq(from = 648,to = 672,by = 4))
+  plotobj2 <- plotobj2 + theme(legend.position = "none")
+  print(plotobj2)
+
+# # Subset the data to only include trough concentrations within the therapeutic
+# # range (0.05 - 0.1 mg/L)
+#   thera.pk.data <- last.pk.data[last.pk.data$IPRE >= 0.05 &
+#     last.pk.data$IPRE <= 0.1,]
+#   length(unique(thera.pk.data$ID))
+# # What is the minimum AUC when trough is in the therapeutic range?
+#   min.AUC24 <- min(thera.pk.data$AUC24)
+#   print(min.AUC24)
+# # What is the maximum AUC when trough is in the therapeutic range?
+#   max.AUC24 <- max(thera.pk.data$AUC24)
+#   print(max.AUC24)
+# # Round IPRE to the nearest 0.01
+#   thera.pk.data$rIPRE <- round(thera.pk.data$IPRE,digits = 2)
+# # What are the range of AUCs when rIPRE == 0.05
+#   summary.AUC24.lowIPRE <- summary.function(
+#     thera.pk.data$AUC24[thera.pk.data$rIPRE == 0.05])
+#   print(summary.AUC24.lowIPRE)
+# # What are the range of AUCs when rIPRE == 0.1
+#   summary.AUC24.highIPRE <- summary.function(
+#     thera.pk.data$AUC24[thera.pk.data$rIPRE == 0.1])
+#   print(summary.AUC24.highIPRE)
 
 # ------------------------------------------------------------------------------
-# Save plot and summary statistics
+# Save plots and summary statistics
 # Plot
   ggsave(plot = plotobj1,
-    filename = "week4_auc_versus_trough.png",
-    dpi = 300)
-# Summary statistics
-  summary.list <- list("AUC24 when IPRE == 0.05" = summary.AUC24.lowIPRE,
-    "AUC24 when IPRE == 0.1" = summary.AUC24.highIPRE)
-  capture.output(summary.list,file = "week4_auc_versus_trough_summary.txt")
+    filename = "week4_auc_vs_trough_50mg.png",
+    dpi = 300,height = 5,width = 7)
+  ggsave(plot = plotobj2,
+    filename = "week4_IPRE_vs_time_50mg.png",
+    dpi = 300,height = 5,width = 7)
+# # Summary statistics
+#   summary.list <- list("AUC24 when IPRE == 0.05" = summary.AUC24.lowIPRE,
+#     "AUC24 when IPRE == 0.1" = summary.AUC24.highIPRE)
+#   capture.output(summary.list,file = "week4_auc_versus_trough_summary.txt")
