@@ -4,7 +4,8 @@
   library(MASS)	# mvrnorm function
   library(MBESS)	# cor2cov function
   library(ggplot2)  # Plotting
-  library(grid)   #Plotting
+  library(grid)   # Plotting
+  library(GGally)	# For plotting plotmatrix
   library(plyr)  # Split and rearrange data, ddply function
   library(dplyr)  # New plyr
   library(mrgsolve) # Metrum differential equation solver for pharmacometrics
@@ -14,7 +15,7 @@
 # ------------------------------------------------------------------------------
 # Statistical functions
 # Simulation seed for reproducible numbers
-  # set.seed(230289)
+  set.seed(230289)
 # 95% prediction interval functions
   CI95lo <- function(x) quantile(x,probs = 0.025,na.rm = TRUE)
   CI95hi <- function(x) quantile(x,probs = 0.975,na.rm = TRUE)
