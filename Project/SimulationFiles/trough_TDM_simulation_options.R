@@ -18,7 +18,7 @@
 
 # ------------------------------------------------------------------------------
 # Time sequences
-  nweeks <- 4
+  nweeks <- 8
 # Pharmacokinetics
 # Simulation times (hours)
   end.pk.time <- nweeks*24*7	# end simulation time
