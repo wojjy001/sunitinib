@@ -11,11 +11,12 @@
   library(mrgsolve) # Metrum differential equation solver for pharmacometrics
   library(reshape)	# melt function
   library(survival)	# Kaplan-Meier plots
+  library(stringr)	# Split character strings
 
 # ------------------------------------------------------------------------------
 # Statistical functions
 # Simulation seed for reproducible numbers
-  set.seed(230289)
+  set.seed(123456)
 # 95% prediction interval functions
   CI95lo <- function(x) quantile(x,probs = 0.025,na.rm = TRUE)
   CI95hi <- function(x) quantile(x,probs = 0.975,na.rm = TRUE)
@@ -32,9 +33,29 @@
     names(result) <- c("n","med","lo95","hi95")
     result
   }
+# Graded summary function
+  graded.summary <- function(x) {
+    n <- length(x)
+    CI90lo <- quantile(x,probs = 0.05,na.rm = TRUE)
+    CI80lo <- quantile(x,probs = 0.1,na.rm = TRUE)
+    CI60lo <- quantile(x,probs = 0.2,na.rm = TRUE)
+    CI40lo <- quantile(x,probs = 0.3,na.rm = TRUE)
+    CI20lo <- quantile(x,probs = 0.4,na.rm = TRUE)
+    med <- median(x)
+    CI20hi <- quantile(x,probs = 0.6,na.rm = TRUE)
+    CI40hi <- quantile(x,probs = 0.7,na.rm = TRUE)
+    CI60hi <- quantile(x,probs = 0.8,na.rm = TRUE)
+    CI80hi <- quantile(x,probs = 0.9,na.rm = TRUE)
+    CI90hi <- quantile(x,probs = 0.95,na.rm = TRUE)
+    result <- c(n,med,CI90lo,CI90hi,CI80lo,CI80hi,CI60lo,CI60hi,CI40lo,CI40hi,
+      CI20lo,CI20hi)
+    names(result) <- c("n","med","CI90lo","CI90hi","CI80lo","CI80hi","CI60lo",
+      "CI60hi","CI40lo","CI40hi","CI20lo","CI20hi")
+    result
+  }
 # Summary count function
   summary.count.function <- function(x) {
-    total.n <- nsim
+    total.n <- ntotal
     n <- length(x)
     result <- n/total.n
     names(result) <- "pro"
@@ -52,6 +73,8 @@
     return(y)
   }
 
+# ------------------------------------------------------------------------------
+# Pharmacokinetic functions not written in mrgsolve code
 # Calculate the AUC in the previous 24-hours
   auc24.function <- function(df) {
     x <- df$AUC
@@ -64,6 +87,8 @@
     df
   }
 
+# ------------------------------------------------------------------------------
+# Pharmacodynamic functions not written in mrgsovle code
 # Account for drop out during tumour simulations
   tumour.dropout <- function(df) {
   # Drop out model parameters
@@ -173,6 +198,9 @@
     df
   }
 
+# ------------------------------------------------------------------------------
+# Functions for overall survival
+# Determine whether individual is dead/alive or dropped out
   alive.function <- function(df) {
     df$status <- 1
     for (i in 2:nrow(df)) {
@@ -204,6 +232,7 @@
   }
 
 # For each individual calculate their stop time (death, study end, censored)
+# Required for Kaplan-Meier plot function
   stop.time.function <- function(df) {
     if (tail(df$status,1) == 1) {
       stop.time <- max(pd.times)

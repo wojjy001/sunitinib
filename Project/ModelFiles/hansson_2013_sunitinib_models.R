@@ -137,7 +137,7 @@ $PARAM		// Population parameters
           RDROP = 0,	// Probability of drop out
 
           // Covariates
-          AUC24 = 1.5,	// 24-hour area under the curve for combined parent and metabolite, mg*h/L
+          AUC24 = 2,	// 24-hour area under the curve for combined parent and metabolite, mg*h/L
           WT = 70,	// Body weight, kg
           OBASE = 200,	// Observed tumour size at baseline (length of longest diameter, mm)
           HFSBASE = 0,	// Baseline hand-foot syndrome grade

@@ -26,6 +26,9 @@
   ),4,4)
 # Convert to variance-covariance matrix
   OMEGA <- cor2cov(CORR,SD)
+# Define proportional residual error for measured concentrations
+  ERRPROP1 <- sqrt(0.06)
+  ERRPROM1 <- sqrt(0.03)
 
 # ------------------------------------------------------------------------------
 # Define model
@@ -124,10 +127,12 @@ $TABLE		// Calculate parent and metabolite concentrations
           double IPREP = CENTP/VCP;	// mg/L
           double IPREM = CENTM/VCM;	// mg/L
           double IPRE = IPREP+IPREM;	// mg/L
+          double DVP = IPREP*(1+ERRPROP1);	// mg/L
+          double DVM = IPREM*(1+ERRPROM1);	// mg/L
           double DV = IPRE*(1+ERRPROP1);	// mg/L
 
 $CAPTURE	WT OBASE HFSBASE FATBASE
-          IPREP IPREM IPRE DV
+          IPREP IPREM IPRE DVP DVM DV
           CLP VCP CLM VCM QI VPM
 '
 # Compile the model code
