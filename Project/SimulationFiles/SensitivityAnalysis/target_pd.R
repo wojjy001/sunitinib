@@ -1,0 +1,397 @@
+# Sunitinib PD Simulation
+# This script reads in previously simulated sunitinib concentrations and
+# simulates biomarkers and adverse effects
+# ------------------------------------------------------------------------------
+# Remove objects in workspace
+  rm(list = ls(all = TRUE))
+# Define global directory for project
+  global.dir <- "/Volumes/Prosecutor/sunitinib/Project/"
+# Source required files
+  source(paste0(global.dir,"functions.R"))	# Universal functions file
+  source(paste0(global.dir,"ModelFiles/hansson_2013_sunitinib_models.R")) # PD
+# Set output directory (folder outside of git folder)
+  sim.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/SensitivityAnalysis/70kg")
+
+# Read in simulation files in the output directory
+# List the folders in the output directory
+  folder.list <- list.dirs(sim.dir)
+  folder.list <- folder.list[contains("target_auc",vars = folder.list)]
+  weight.list <- folder.list
+  study.list <- folder.list
+  for (i in 1:length(folder.list)) {
+    folder.list[i] <- str_split(folder.list[i],pattern = "/")
+    weight.list[i] <- folder.list[[i]][6]
+    study.list[i] <- folder.list[[i]][7]
+  }
+  folder.data <- data.frame(weight = weight.list,
+    study = study.list)
+# Read in .csv files from each folder
+  # PK data
+    read.pk.data <- function(folder.data) {
+      weight <- as.character(folder.data$weight[1])
+      study <- as.character(folder.data$study[1])
+      pk.data <- read.csv(file = paste0(sim.dir,"/",weight,"/",study,
+        "/",study,"_pk_data.csv"))
+      pk.data$study <- study
+      pk.data
+    }
+    pk.data <- ddply(folder.data, .(study), read.pk.data, .progress = "text")
+# Read in population characteristics from pk.data
+  nid <- length(unique(pk.data$ID))
+  ID.seq <- 1:nid
+  nsim <- length(unique(pk.data$SIM))
+  SIM.seq <- 1:nsim
+  ntotal <- nid*nsim
+
+# ------------------------------------------------------------------------------
+# Covariates
+# Baseline tumour size
+  first.OBASE <- exp(log(rnorm(nid,mean = 195,sd = 120)))
+  repeat {
+    new.OBASE <- first.OBASE[first.OBASE == "NaN"]
+    new.OBASE <- exp(log(rnorm(length(new.OBASE),mean = 195,sd = 120)))
+    if (length(new.OBASE[new.OBASE == "NaN"]) == 0) break
+  }
+  OBASE <- c(first.OBASE[first.OBASE != "NaN"],new.OBASE)
+# Baseline hand-foot syndrome grade
+  hfs.grade0.prob <- 0.95
+  hfs.grade1.prob <- 0.02
+  hfs.grade2.prob <- 0.02
+  hfs.grade3.prob <- 0.01
+  base.hfs.probs <- c(hfs.grade0.prob,hfs.grade1.prob,hfs.grade2.prob,
+    hfs.grade3.prob)
+  HFSBASE <- unlist(llply(seq_len(ntotal),
+    function(x) sample(c(0,1,2,3),size = x/x,prob = base.hfs.probs)))
+# Baseline fatigue grade
+  fat.grade0.prob <- 0.85
+  fat.grade1.prob <- 0.09
+  fat.grade2.prob <- 0.05
+  fat.grade3.prob <- 0.01
+  base.fat.probs <- c(fat.grade0.prob,fat.grade1.prob,fat.grade2.prob,
+    fat.grade3.prob)
+  FATBASE <- unlist(llply(seq_len(ntotal),
+    function(x) sample(c(0,1,2,3),size = x/x,prob = base.fat.probs)))
+setwd(sim.dir)
+
+# ------------------------------------------------------------------------------
+# Generate random effect parameters
+# Between subject variability
+  if (ntotal > 1) {
+    pd.ETA.matrix <- mvrnorm(ntotal,
+      mu = rep(0,times = dim(pd.OMEGA)[1]),pd.OMEGA) %>%
+      as.data.frame
+    names(pd.ETA.matrix) <- c("ETAVEGFR3BASE","ETAVEGFR3MRT","ETAVEGFR3I50",
+      "ETASKITBASE","ETASKITMRT","ETASKITI50","ETASKITSLP","ETAKG","ETAKRSKIT",
+      "ETAKRD","ETAOBASE","ETAANCBASE","ETAANCMTT","ETAANCEMAX","ETAANCE50",
+      "ETABPBASE","ETABPSLP","ETABPMRT","ETAHFS0","ETAHFS1","ETAHFS2","ETAFAT0",
+      "ETAFAT1","ETAFAT2","ETAFAT3")
+  } else {
+    pd.ETA.matrix <- data.frame(ETAVEGFR3BASE = 0,ETAVEGFR3MRT = 0,
+      ETASKITBASE = 0,ETASKITMRT = 0,ETASKITSLP = 0,ETAVEGFR3I50 = 0,
+      ETASKITI50 = 0,ETAKG = 0,ETAKRSKIT = 0,ETAKRD = 0,ETAOBASE = 0,
+      ETAANCBASE = 0,ETAANCMTT = 0,ETAANCEMAX = 0,ETAANCE50 = 0,ETABPBASE = 0,
+      ETABPSLP = 0,ETABPMRT = 0,ETAHFS0 = 0,ETAHFS1 = 0,ETAHFS2 = 0,ETAFAT0 = 0,
+      ETAFAT1 = 0,ETAFAT2 = 0,ETAFAT3 = 0)
+  }
+
+# ------------------------------------------------------------------------------
+# Input data frame for simulation
+  pkpd.data <- pk.data[c("SIM","ID","time","cyc","amt","WT","IPREP",
+    "IPREM","IPRE","AUC24","study")]
+  pd.ID.data <- data.frame(SIM = SIM.seq,ID = ID.seq,OBASE,HFSBASE,FATBASE,
+    pd.ETA.matrix)
+  input.pd.data <- merge(pkpd.data,pd.ID.data,by = c("SIM","ID"),all = T)
+  input.pd.data$cmt <- 0
+  input.pd.data$evid <- 0
+  input.pd.data$RSURV <- runif(nid*length(unique(pk.data$time)),min = 0,max = 1)
+  input.pd.data$RDROP <- runif(nid*length(unique(pk.data$time)),min = 0,max = 1)
+  input.pd.data <- input.pd.data[with(input.pd.data,order(input.pd.data$SIM,
+    input.pd.data$ID,input.pd.data$time)),]
+
+# ------------------------------------------------------------------------------
+# Simulate biomarker and adverse effect profiles
+  simulate.pd <- function(input.pd.data) {
+    pd.data <- pd.mod %>% mrgsim(data = input.pd.data,
+      carry.out = c("SIM","cyc","amt","IPREP","IPREM","IPRE","AUC24")) %>%
+      as.data.frame
+  }
+  pd.data <- ddply(input.pd.data, .(study), simulate.pd,
+    .progress = "text")
+# Use hand-foot syndrome state probabilities to simulate HFS profile
+  pd.data <- ddply(pd.data, .(study,SIM,ID), simulate.HFS.grade,
+    .progress = "text")
+# Use fatigue state probabilities to simulate FAT profile
+  pd.data <- ddply(pd.data, .(study,SIM,ID), simulate.FAT.grade,
+    .progress = "text")
+# Determine overall survival for the population over the study period
+  pd.data <- ddply(pd.data, .(study,SIM,ID), alive.function,
+    .progress = "text")
+  pd.data$AUCTarget <- as.factor(pd.data$study)
+  levels(pd.data$AUCTarget) <- c("1 mg*h/L","2 mg*h/L","3 mg*h/L",
+    "4 mg*h/L")
+# For biomarker and adverse effect simulations, only plot the first 50 weeks
+  early.data <- pd.data[pd.data$time <= 50*24*7,]
+
+# ------------------------------------------------------------------------------
+# For overall survival plots, calculate the proportion of individuals alive
+# at each time-point
+  survival.data <- ddply(pd.data, .(AUCTarget,time), pro.alive.function)
+# Plot overall survival over time
+  plotobj1 <- NULL
+  plotobj1 <- ggplot(survival.data)
+  plotobj1 <- plotobj1 + geom_step(aes(x = time/24/7,y = pro.alive,
+    colour = AUCTarget))
+  plotobj1 <- plotobj1 + scale_y_continuous("Probability of Survival",
+    lim = c(0,1),
+    breaks = seq(from = 0,to = 1,by = 0.2),
+    labels = seq(from = 0,to = 1,by = 0.2))
+  plotobj1 <- plotobj1 + scale_x_continuous("Time (weeks)",
+    breaks = seq(from = 0,to = max(survival.data$time)/24/7,by = 12),
+    lim = c(0,max(survival.data$time/24/7)))
+  print(plotobj1)
+
+  ggsave(plot = plotobj1,filename = "target_auc_overallsurvival.png",
+    width = 20,height = 15,unit = "cm",dpi = 300)
+
+# ------------------------------------------------------------------------------
+# Summarise and plot sVEGFR-3 over time
+  summary.VEGFR3 <- ddply(early.data, .(AUCTarget,time),
+    function(early.data) graded.summary(early.data$IPRE_VEGFR3))
+# Plot median and confidence intervals and facet
+  plotobj2a <- NULL
+  plotobj2a <- ggplot(summary.VEGFR3)
+  plotobj2a <- plotobj2a + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi,fill = AUCTarget),alpha = 0.1)
+  plotobj2a <- plotobj2a + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi,fill = AUCTarget),alpha = 0.1)
+  plotobj2a <- plotobj2a + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi,fill = AUCTarget),alpha = 0.1)
+  plotobj2a <- plotobj2a + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi,fill = AUCTarget),alpha = 0.1)
+  plotobj2a <- plotobj2a + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
+  plotobj2a <- plotobj2a + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj2a <- plotobj2a + scale_y_continuous("sVEGFR-3 Concentration (pg/mL)",
+    lim = c(8,12))
+  plotobj2a <- plotobj2a + scale_x_continuous("Time (weeks)")
+  plotobj2a <- plotobj2a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj2a <- plotobj2a + theme(legend.position = "none")
+  print(plotobj2a)
+
+  ggsave(plot = plotobj2a,filename = "auc_target_sVEGFR3_facet.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+# Plot only medians
+  plotobj2b <- NULL
+  plotobj2b <- ggplot(summary.VEGFR3)
+  plotobj2b <- plotobj2b + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj2b <- plotobj2b + scale_y_continuous("sVEGFR-3 Concentration (pg/mL)",
+    lim = c(9.5,11),breaks = c(9.5,10,10.5,11),labels = c(9.5,10,10.5,11))
+  plotobj2b <- plotobj2b + scale_x_continuous("Time (weeks)")
+  print(plotobj2b)
+
+  ggsave(plot = plotobj2b,filename = "auc_target_sVEGFR3_median.png",
+    width = 20,height = 15,unit = "cm",dpi = 300)
+
+# ------------------------------------------------------------------------------
+# Summarise and plot sKIT over time
+  summary.SKIT <- ddply(early.data, .(AUCTarget,time),
+    function(early.data) graded.summary(early.data$IPRE_SKIT))
+# Plot median and confidence intervals and facet
+  plotobj3a <- NULL
+  plotobj3a <- ggplot(summary.SKIT)
+  plotobj3a <- plotobj3a + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi,fill = AUCTarget),alpha = 0.1)
+  plotobj3a <- plotobj3a + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi,fill = AUCTarget),alpha = 0.1)
+  plotobj3a <- plotobj3a + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi,fill = AUCTarget),alpha = 0.1)
+  plotobj3a <- plotobj3a + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi,fill = AUCTarget),alpha = 0.1)
+  plotobj3a <- plotobj3a + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
+  plotobj3a <- plotobj3a + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj3a <- plotobj3a + scale_y_continuous("sKIT Concentration (pg/mL)",
+    lim = c(8,14))
+  plotobj3a <- plotobj3a + scale_x_continuous("Time (weeks)")
+  plotobj3a <- plotobj3a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj3a <- plotobj3a + theme(legend.position = "none")
+  print(plotobj3a)
+
+  ggsave(plot = plotobj3a,filename = "auc_target_sKIT_facet.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+# Plot only medians
+  plotobj3b <- NULL
+  plotobj3b <- ggplot(summary.SKIT)
+  plotobj3b <- plotobj3b + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj3b <- plotobj3b + scale_y_continuous("sKIT Concentration (pg/mL)",
+    lim = c(10,11),breaks = seq(from = 10,to = 11,by = 0.2),
+    labels = seq(from = 10,to = 11,by = 0.2))
+  plotobj3b <- plotobj3b + scale_x_continuous("Time (weeks)")
+  print(plotobj3b)
+
+  ggsave(plot = plotobj3b,filename = "auc_target_sKIT_median.png",
+    width = 20,height = 15,unit = "cm",dpi = 300)
+
+# Summarise and plot tumour size over time
+  summary.TUMOUR <- ddply(early.data, .(AUCTarget,time),
+    function(early.data) graded.summary(early.data$TUMOUR))
+# Plot median and confidence intervals and facet
+  plotobj4a <- NULL
+  plotobj4a <- ggplot(summary.TUMOUR)
+  plotobj4a <- plotobj4a + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi,fill = AUCTarget),alpha = 0.1)
+  plotobj4a <- plotobj4a + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi,fill = AUCTarget),alpha = 0.1)
+  plotobj4a <- plotobj4a + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi,fill = AUCTarget),alpha = 0.1)
+  plotobj4a <- plotobj4a + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi,fill = AUCTarget),alpha = 0.1)
+  plotobj4a <- plotobj4a + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
+  plotobj4a <- plotobj4a + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj4a <- plotobj4a + scale_y_continuous("Sum of Longest Diameters (mm)")
+  plotobj4a <- plotobj4a + scale_x_continuous("Time (weeks)")
+  plotobj4a <- plotobj4a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj4a <- plotobj4a + theme(legend.position = "none")
+  print(plotobj4a)
+
+  ggsave(plot = plotobj4a,filename = "auc_target_tumour_facet.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+# Plot medians only
+  plotobj4b <- NULL
+  plotobj4b <- ggplot(summary.TUMOUR)
+  plotobj4b <- plotobj4b + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj4b <- plotobj4b + scale_y_continuous("Sum of Longest Diameters (mm)",
+    lim = c(0,NA))
+  plotobj4b <- plotobj4b + scale_x_continuous("Time (weeks)")
+  print(plotobj4b)
+
+  ggsave(plot = plotobj4b,filename = "auc_target_tumour_median.png",
+    width = 20,height = 15,unit = "cm",dpi = 300)
+
+# Summarise and plot absolute neutrophil count over time
+  summary.ANC <- ddply(early.data, .(AUCTarget,time),
+    function(early.data) graded.summary(early.data$ANC))
+# Plot median and confidence intervals and facet
+  plotobj5a <- NULL
+  plotobj5a <- ggplot(summary.ANC)
+  plotobj5a <- plotobj5a + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi,fill = AUCTarget),alpha = 0.1)
+  plotobj5a <- plotobj5a + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi,fill = AUCTarget),alpha = 0.1)
+  plotobj5a <- plotobj5a + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi,fill = AUCTarget),alpha = 0.1)
+  plotobj5a <- plotobj5a + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi,fill = AUCTarget),alpha = 0.1)
+  plotobj5a <- plotobj5a + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
+  plotobj5a <- plotobj5a + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj5a <- plotobj5a + scale_y_log10("Absolute Neutrophil Count (x10^9)")
+  plotobj5a <- plotobj5a + scale_x_continuous("Time (weeks)")
+  plotobj5a <- plotobj5a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj5a <- plotobj5a + theme(legend.position = "none")
+  print(plotobj5a)
+
+  ggsave(plot = plotobj5a,filename = "auc_target_anc_facet.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+# Plot medians only
+  plotobj5b <- NULL
+  plotobj5b <- ggplot(summary.ANC)
+  plotobj5b <- plotobj5b + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj5b <- plotobj5b + scale_y_log10("Absolute Neutrophil Count (x10^9)",
+    lim = c(1,10),breaks = c(1,2,5,10),labels = c(1,2,5,10))
+  plotobj5b <- plotobj5b + scale_x_continuous("Time (weeks)")
+  print(plotobj5b)
+
+  ggsave(plot = plotobj5b,filename = "auc_target_anc_median.png",
+    width = 20,height = 15,unit = "cm",dpi = 300)
+
+# Summarise and plot diastolic blood pressure over time
+  summary.BP <- ddply(early.data, .(AUCTarget,time),
+    function(early.data) graded.summary(early.data$BP))
+# Plot median and confidence intervals and facet
+  plotobj6a <- NULL
+  plotobj6a <- ggplot(summary.BP)
+  plotobj6a <- plotobj6a + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi,fill = AUCTarget),alpha = 0.1)
+  plotobj6a <- plotobj6a + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi,fill = AUCTarget),alpha = 0.1)
+  plotobj6a <- plotobj6a + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi,fill = AUCTarget),alpha = 0.1)
+  plotobj6a <- plotobj6a + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi,fill = AUCTarget),alpha = 0.1)
+  plotobj6a <- plotobj6a + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
+  plotobj6a <- plotobj6a + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj6a <- plotobj6a + scale_y_continuous("Diastolic Blood Pressure (mmHg)")
+  plotobj6a <- plotobj6a + scale_x_continuous("Time (weeks)")
+  plotobj6a <- plotobj6a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj6a <- plotobj6a + theme(legend.position = "none")
+  print(plotobj6a)
+
+  ggsave(plot = plotobj6a,filename = "auc_target_bp_facet.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+# Plot medians only
+  plotobj6b <- NULL
+  plotobj6b <- ggplot(summary.BP)
+  plotobj6b <- plotobj6b + geom_line(aes(x = time/24/7,y = med,
+    colour = AUCTarget))
+  plotobj6b <- plotobj6b + scale_y_continuous("Diastolic Blood Pressure (mmHg)")
+  plotobj6b <- plotobj6b + scale_x_continuous("Time (weeks)")
+  print(plotobj6b)
+
+  ggsave(plot = plotobj6b,filename = "auc_target_bp_median.png",
+    width = 20,height = 15,unit = "cm",dpi = 300)
+
+# Summarise and plot probability of hand-foot syndrome grade over time
+  summary.HFS <- ddply(early.data, .(AUCTarget,time,HFS),
+    function(early.data) summary.count.function(early.data$HFS))
+  summary.HFS$Grade <- as.factor(summary.HFS$HFS)
+  plotobj7 <- NULL
+  plotobj7 <- ggplot(summary.HFS)
+  plotobj7 <- plotobj7 + geom_line(aes(x = time/24/7,y = pro,colour = Grade))
+  plotobj7 <- plotobj7 + scale_y_continuous("Probability of Hand-Foot Syndrome Grade",
+    lim = c(0,1),
+    breaks = seq(from = 0,to = 1,by = 0.2),
+    labels = seq(from = 0,to = 1,by = 0.2))
+  plotobj7 <- plotobj7 + scale_x_continuous("Time (weeks)")
+  plotobj7 <- plotobj7 + facet_wrap(~AUCTarget,ncol = 4)
+  print(plotobj7)
+
+  ggsave(plot = plotobj7,filename = "auc_target_HFS.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+
+# Summarise and plot probability of fatigue grade over time
+  summary.FAT <- ddply(early.data, .(AUCTarget,time,FAT),
+    function(early.data) summary.count.function(early.data$FAT))
+  summary.FAT$Grade <- as.factor(summary.FAT$FAT)
+  plotobj8 <- NULL
+  plotobj8 <- ggplot(summary.FAT)
+  plotobj8 <- plotobj8 + geom_line(aes(x = time/24/7,y = pro,colour = Grade))
+  plotobj8 <- plotobj8 + scale_y_continuous("Probability of Fatigue Grade",
+    lim = c(0,1),
+    breaks = seq(from = 0,to = 1,by = 0.2),
+    labels = seq(from = 0,to = 1,by = 0.2))
+  plotobj8 <- plotobj8 + scale_x_continuous("Time (weeks)")
+  plotobj8 <- plotobj8 + facet_wrap(~AUCTarget,ncol = 4)
+  print(plotobj8)
+
+  ggsave(plot = plotobj8,filename = "auc_target_FAT.png",
+    width = 30,height = 15,unit = "cm",dpi = 300)
+
+# ------------------------------------------------------------------------------
+# Clean up and save the PD simulated data
+  output.pd.data <- pd.data[c("study","SIM","ID","time","cyc","amt","IPREP",
+    "IPREM","IPRE","AUC24","TUMOUR","ANC","BP","WT","OBASE","HFSBASE","FATBASE",
+    "IPRE_VEGFR3","IPRE_SKIT","HFS","FAT","status")]
+  write.csv(output.pd.data,file = "auc_target_pd_data.csv",
+    quote = FALSE,row.names = FALSE)
