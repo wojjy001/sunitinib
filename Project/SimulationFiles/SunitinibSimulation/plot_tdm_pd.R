@@ -3,33 +3,37 @@
 # ------------------------------------------------------------------------------
 # Remove objects in workspace
   rm(list = ls(all = TRUE))
+################################################################################
+# ONLY DIRECTORIES TO BE CHANGED DEPENDING ON USER
 # Define global directory for project
   global.dir <- "/Volumes/Prosecutor/sunitinib/Project/"
-# Source required files
-  source(paste0(global.dir,"functions.R"))	# Universal functions file
-# Set directory where simulation output files are saved
-  sim.dir <- paste0(global.dir,"Output")
-# Set working directory
-  setwd(sim.dir)
+# Create output directory (folder outside of git folder) if not already
+  output.dir <- "/Volumes/Prosecutor/sunitinib_nogit/TDMSimulations/"
+################################################################################
 # Read in simulation files in the output directory
 # List the folders in the output directory
-  folder.list <- list.dirs(sim.dir)
-  folder.list <- folder.list[2:length(folder.list)]
-  for (i in 1:length(folder.list)) {
-    folder.list[i] <- str_split(folder.list[i],pattern = sim.dir)
-    folder.list[i] <- folder.list[[i]][2]
-  }
-  folder.list <- unlist(folder.list)
-  # folder.list <- "/bayes_tdm06"
+  # folder.list <- list.dirs(output.dir)
+  # folder.list <- folder.list[2:length(folder.list)]
+  # for (i in 1:length(folder.list)) {
+  #   folder.list[i] <- str_split(folder.list[i],pattern = output.dir)
+  #   folder.list[i] <- folder.list[[i]][2]
+  # }
+  # folder.list <- unlist(folder.list)
+# OR just list the one folder you want to process
+  folder.list <- "/standard_dose03"
 # Read in .csv files from each folder
   read.pd.data <- function(x) {
-    pd.data <- read.csv(file = paste0(sim.dir,x,"/",x,"_pd_data.csv"))
+    pd.data <- read.csv(file = paste0(output.dir,x,"/",x,"_pd_data.csv"))
     pd.data$study <- x
     pd.data
   }
   pd.data <- ldply(folder.list,read.pd.data,.progress = "text")
 # For biomarker and adverse effect simulations, only plot the first 50 weeks
   early.data <- pd.data[pd.data$time <= 50*24*7,]
+
+# ------------------------------------------------------------------------------
+# Source required files
+  source(paste0(global.dir,"functions.R"))	# Universal functions file
 
 # ------------------------------------------------------------------------------
 # For overall survival plots, calculate the proportion of individuals alive
@@ -52,7 +56,7 @@
       lim = c(0,max(survival.data$time/24/7)))
     print(plotobj1)
 
-    ggsave(plot = plotobj1,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj1,filename = paste0(output.dir,x$study[1],x$study[1],
       "_overallsurvival.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -81,7 +85,7 @@
     plotobj2 <- plotobj2 + scale_x_continuous("Time (weeks)")
     print(plotobj2)
 
-    ggsave(plot = plotobj2,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj2,filename = paste0(output.dir,x$study[1],x$study[1],
       "_sVEGFR3.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -109,7 +113,7 @@
     plotobj3 <- plotobj3 + scale_x_continuous("Time (weeks)")
     print(plotobj3)
 
-    ggsave(plot = plotobj3,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj3,filename = paste0(output.dir,x$study[1],x$study[1],
       "_sKIT.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -136,7 +140,7 @@
     plotobj4 <- plotobj4 + scale_x_continuous("Time (weeks)")
     print(plotobj4)
 
-    ggsave(plot = plotobj4,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj4,filename = paste0(output.dir,x$study[1],x$study[1],
       "_tumour.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -165,7 +169,7 @@
     plotobj5 <- plotobj5 + scale_x_continuous("Time (weeks)")
     print(plotobj5)
 
-    ggsave(plot = plotobj5,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj5,filename = paste0(output.dir,x$study[1],x$study[1],
       "_ANC.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -193,7 +197,7 @@
     plotobj6 <- plotobj6 + scale_x_continuous("Time (weeks)")
     print(plotobj6)
 
-    ggsave(plot = plotobj6,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj6,filename = paste0(output.dir,x$study[1],x$study[1],
       "_BP.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -217,7 +221,7 @@
     plotobj7 <- plotobj7 + scale_x_continuous("Time (weeks)")
     print(plotobj7)
 
-    ggsave(plot = plotobj7,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj7,filename = paste0(output.dir,x$study[1],x$study[1],
       "_HFS.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -238,7 +242,7 @@
     plotobj8 <- plotobj8 + scale_x_continuous("Time (weeks)")
     print(plotobj8)
 
-    ggsave(plot = plotobj8,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj8,filename = paste0(output.dir,x$study[1],x$study[1],
       "_FAT.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -274,7 +278,7 @@
       lim = c(0,max(survival.data$time/24/7)))
     print(plotobj9)
 
-    ggsave(plot = plotobj9,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj9,filename = paste0(output.dir,x$study[1],x$study[1],
       "_os_trough.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -309,7 +313,7 @@
       lim = c(0,max(survival.data$time/24/7)))
     print(plotobj10)
 
-    ggsave(plot = plotobj10,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj10,filename = paste0(output.dir,x$study[1],x$study[1],
       "_os_auc.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }

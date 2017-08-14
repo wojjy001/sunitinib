@@ -3,32 +3,36 @@
 # ------------------------------------------------------------------------------
 # Remove objects in workspace
   rm(list = ls(all = TRUE))
+################################################################################
+# ONLY DIRECTORIES TO BE CHANGED DEPENDING ON USER
 # Define global directory for project
   global.dir <- "/Volumes/Prosecutor/sunitinib/Project/"
-# Source required files
-  source(paste0(global.dir,"functions.R"))	# Universal functions file
-# Set directory where simulation output files are saved
-  sim.dir <- paste0(global.dir,"Output")
-# Set working directory
-  setwd(sim.dir)
+# Create output directory (folder outside of git folder) if not already
+  output.dir <- "/Volumes/Prosecutor/sunitinib_nogit/TDMSimulations/"
+################################################################################
 # Read in simulation files in the output directory
 # List the folders in the output directory
-  # folder.list <- list.dirs(sim.dir)
+  # folder.list <- list.dirs(output.dir)
   # folder.list <- folder.list[2:length(folder.list)]
   # for (i in 1:length(folder.list)) {
-  #   folder.list[i] <- str_split(folder.list[i],pattern = sim.dir)
+  #   folder.list[i] <- str_split(folder.list[i],pattern = output.dir)
   #   folder.list[i] <- folder.list[[i]][2]
   # }
   # folder.list <- unlist(folder.list)
-  folder.list <- "/standard_dose02"
+# OR just list the one folder you want to process
+  folder.list <- "/standard_dose03"
 # Read in .csv files from each folder
   read.pk.data <- function(x) {
-    pk.data <- read.csv(file = paste0(sim.dir,x,"/",x,"_pk_data.csv"))
+    pk.data <- read.csv(file = paste0(output.dir,x,"/",x,"_pk_data.csv"))
     pk.data$study <- x
     pk.data
   }
   pk.data <- ldply(folder.list,read.pk.data,.progress = "text")
   early.data <- pk.data[pk.data$cyc <= 2,]
+
+# ------------------------------------------------------------------------------
+# Source required files
+  source(paste0(global.dir,"functions.R"))	# Universal functions file
 
 # ------------------------------------------------------------------------------
 # Recreate IPRE versus time plots so that y-axes are the same
@@ -61,7 +65,7 @@
     plotobj <- plotobj + scale_x_continuous("Time (days)")
     print(plotobj)
 
-    ggsave(plot = plotobj,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj,filename = paste0(output.dir,x$study[1],x$study[1],
       "_IPREvtime.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -99,7 +103,7 @@
     plotobj <- plotobj + scale_x_continuous("Time (days)")
     print(plotobj)
 
-    ggsave(plot = plotobj,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj,filename = paste0(output.dir,x$study[1],x$study[1],
       "_AUC24vtime.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
@@ -131,7 +135,7 @@
       lim = c(0,0.3))
     print(plotobj)
 
-    ggsave(plot = plotobj,filename = paste0(sim.dir,x$study[1],x$study[1],
+    ggsave(plot = plotobj,filename = paste0(output.dir,x$study[1],x$study[1],
       "_AUC24vIPRE.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
   }
