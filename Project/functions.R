@@ -235,7 +235,7 @@
 # Required for Kaplan-Meier plot function
   stop.time.function <- function(df) {
     if (tail(df$status,1) == 1) {
-      stop.time <- max(pd.times)
+      stop.time <- max(df$time)
       event <- 0
     } else {
       stop.time <- head(df$time[df$status == 0],1)

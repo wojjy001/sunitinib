@@ -1,22 +1,35 @@
-# Sunitinib Simulation
-# This script simulates sunitinib concentrations following an optimisied dose
-# for each individual that will achieve a target trough concentration
+# Sensitivity Analysis
+# This script simulates sunitinib concentrations following an optimised dose
+# for each individual that will achieve a target trough concentration or AUC
+# Doses are not restricted to formulation sizes
 # ------------------------------------------------------------------------------
 # Remove objects in workspace
   rm(list = ls(all = TRUE))
+################################################################################
+# ONLY DIRECTORIES TO BE CHANGED DEPENDING ON USER
 # Define global directory for project
   global.dir <- "/Volumes/Prosecutor/sunitinib/Project/"
+# Create output directory (folder outside of git folder) if not already
+  output.dir <- "/Volumes/Prosecutor/sunitinib_nogit/"
+################################################################################
+  dir.create(output.dir)
+# Create output directory specifically for sensitivity analysis (if not already)
+  sens.output.dir <- paste0(output.dir,"SensitivityAnalysis/")
+  dir.create(sens.output.dir)
+
+# ------------------------------------------------------------------------------
 # Source required files
   source(paste0(global.dir,"functions.R"))	# Universal functions file
   source(paste0(global.dir,"ModelFiles/yu_2015_sunitinib_model.R"))	# PK model
-# Set output directory (folder outside of git folder)
-  WT <- 100	# kg, all individuals will have the same weight
-  output.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/SensitivityAnalysis/",
-    WT,"kg/")
-  dir.create(output.dir)
 
 # ------------------------------------------------------------------------------
 # Create population
+################################################################################
+  WT <- 70	# kg, all individuals will have the same weight
+################################################################################
+  wt.output.dir <- paste0(sens.output.dir,WT,"kg/")
+  dir.create(wt.output.dir)	# Create weight specific directory
+  setwd(wt.output.dir)
   nid <- 500	# Number of individuals
   nsim <- 1	# Number of times individuals with x characteristics will be
   # simulated
@@ -34,6 +47,7 @@
     pk.ETA.matrix <- data.frame(ETACLP = 0,ETAVCP = 0,ETACLM = 0,ETAVCM = 0)
   }
 
+# ------------------------------------------------------------------------------
 # Dosing specifications
   dose <- 50	# mg, an initial dose that will be overwritten during dose optim
 # Create sequence of dosing times based on "on" and "off" periods in cycles
@@ -47,6 +61,7 @@
   })	#llply
   on.times <- unlist(on.times)
 
+# ------------------------------------------------------------------------------
 # Time sequences
   nweeks <- ncycles*cycle.duration
 # Pharmacokinetics
@@ -59,6 +74,7 @@
 # Length of pk.times will always be odd
   cyc <- c(rep(cycles,(length(pk.times)-1)/ncycles),ncycles) %>% sort
 
+# ------------------------------------------------------------------------------
 # Input data frame for simulation
   pk.ID.data <- data.frame(SIM = SIM.seq,ID = ID.seq,WT,pk.ETA.matrix)
   input.pk.data <- lapply(pk.ID.data,rep.int,times = length(pk.times)) %>%
@@ -73,19 +89,22 @@
   input.pk.data$evid[input.pk.data$time %in% on.times] <- 1
 
 # ------------------------------------------------------------------------------
-# Define target trough concentrations
-  target.trough <- c(0.05,0.075,0.1)
-# Run simulations process for each value in "target.trough"
-  for (i in 1:length(target.trough)) {
+# Define targets
+################################################################################
+  type <- "trough" # Either "auc" or "trough"
+  target <- c(0.050,0.075,0.100)	# auc in mg*h/L or trough in mg/L
+  # concentration in ng*mL
+################################################################################
+# Run simulations process for each value in "target"
+  for (i in 1:length(target)) {
   # Create a folder for output to be saved
-  # Each "target.trough" value will have its own directory
-    target.dir.name <- paste0("target_trough_",target.trough[i]*1000,"ngmL_",
-      WT,"kg")
-    target.dir <- paste0(output.dir,target.dir.name,"/")
+  # Each "target.auc" value will have its own directory
+    target.dir.name <- paste0("target_",type,"_",target[i],"_",WT,"kg")
+    target.dir <- paste0(wt.output.dir,target.dir.name,"/")
     dir.create(target.dir)
     setwd(target.dir)
     print(paste0("Simulating ",target.dir.name))
-  # Optimise the dose for each individual that will achieve the target trough
+  # Optimise the dose for each individual that will achieve the target auc
   # concentration by Day 28 of the first cycle of treatment
     pop.optimise.dose <- function(input.df) {
     # Subset the input data frame for only the first cycle
@@ -103,11 +122,17 @@
       # Simulate concentration-time profile with each iteration of dose
         optim.data <- pk.mod %>% mrgsim(data = input.optim.data) %>%
           as.data.frame
-      # Pull out the predicted concentration at the target time
-        yhat <- optim.data$IPRE[optim.data$time == 28*24]
+        optim.data <- auc24.function(optim.data)
+      # Pull out the predicted AUC at the target time
+        if (type == "auc") {
+          yhat <- optim.data$AUC24[optim.data$time == 28*24]
+        }
+        if (type == "trough") {
+          yhat <- optim.data$IPRE[optim.data$time == 28*24]
+        }
       # Find the value of dose that maximises the likelihood of the predicted
-      # concentration being the target concentration
-        loglik <- dnorm(target.trough[i],yhat,yhat*err,log = TRUE)
+      # concentration being the target AUC
+        loglik <- dnorm(target[i],yhat,yhat*err,log = TRUE)
       # Define the objective function value that will be optimised by "optim"
         objective <- -1*sum(loglik)
       }
@@ -159,19 +184,18 @@
         ymax = CI20hi),fill = "red",alpha = 0.1)
       plotobj1 <- plotobj1 + geom_line(aes(x = time/24,y = med),
         colour = "red")
-      plotobj1 <- plotobj1 + geom_hline(aes(yintercept = target.trough[i]),
+      plotobj1 <- plotobj1 + geom_hline(aes(yintercept = 0.05),
         linetype = "dashed")
-      plotobj1 <- plotobj1 + scale_y_continuous("Total Sunitinib Concentration (mg/L)",
-        breaks = seq(from = 0,to = target.trough[i]+0.01,by = 0.01),
-        labels = seq(from = 0,to = target.trough[i]+0.01,by = 0.01),
-        lim = c(0,target.trough[i]+0.01))
+      plotobj1 <- plotobj1 + geom_hline(aes(yintercept = 0.1),
+        linetype = "dashed")
+      plotobj1 <- plotobj1 + scale_y_continuous("Total Sunitinib Concentration (mg/L)",lim = c(0,NA))
       plotobj1 <- plotobj1 + scale_x_continuous("Time (days)",
         breaks = seq(from = 0,to = 84,by = 14),
         labels = seq(from = 0,to = 84,by = 14))
       print(plotobj1)
       ggsave(plot = plotobj1,filename = paste0(target.dir.name,"_IPREvstime.png"),
         height = 15,width = 20,units = "cm",dpi = 300)
-    # Plot IPRE
+    # Plot AUC24
       plotobj2 <- NULL
       plotobj2 <- ggplot(summary.AUC24)
       plotobj2 <- plotobj2 + geom_ribbon(aes(x = time/24,ymin = CI90lo,
@@ -186,6 +210,11 @@
         ymax = CI20hi),fill = "blue",alpha = 0.1)
       plotobj2 <- plotobj2 + geom_line(aes(x = time/24,y = med),
         colour = "blue")
+      if (type == "auc") {
+        plotobj2 <- plotobj2 + geom_hline(aes(yintercept = target[i]),
+          linetype = "dashed")
+        plotobj2 <- plotobj2 + scale_y_continuous("Total Sunitinib 24-hour AUC (mg*h/L)",lim = c(0,target[i]+0.5))
+      }
       plotobj2 <- plotobj2 + scale_y_continuous("Total Sunitinib 24-hour AUC (mg*h/L)")
       plotobj2 <- plotobj2 + scale_x_continuous("Time (days)",
         breaks = seq(from = 0,to = 84,by = 14),

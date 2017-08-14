@@ -1,41 +1,46 @@
-# Sunitinib PD Simulation
+# Sensitivity Analysis
 # This script reads in previously simulated sunitinib concentrations and
-# simulates biomarkers and adverse effects
+# simulates biomarkers, adverse effects and overall survival
 # ------------------------------------------------------------------------------
 # Remove objects in workspace
   rm(list = ls(all = TRUE))
+################################################################################
+# ONLY DIRECTORIES TO BE CHANGED DEPENDING ON USER
 # Define global directory for project
   global.dir <- "/Volumes/Prosecutor/sunitinib/Project/"
+# Create output directory (folder outside of git folder) if not already
+  output.dir <- "/Volumes/Prosecutor/sunitinib_nogit/"
+################################################################################
+  dir.create(output.dir)
+# Create output directory specifically for sensitivity analysis (if not already)
+  sens.output.dir <- paste0(output.dir,"SensitivityAnalysis/")
+  dir.create(sens.output.dir)
+  setwd(sens.output.dir)
+
+# ------------------------------------------------------------------------------
 # Source required files
   source(paste0(global.dir,"functions.R"))	# Universal functions file
   source(paste0(global.dir,"ModelFiles/hansson_2013_sunitinib_models.R")) # PD
-# Set output directory (folder outside of git folder)
-  sim.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/SensitivityAnalysis/70kg")
 
+# ------------------------------------------------------------------------------
 # Read in simulation files in the output directory
 # List the folders in the output directory
-  folder.list <- list.dirs(sim.dir)
+  folder.list <- list.dirs(sens.output.dir)
   folder.list <- folder.list[contains("target_auc",vars = folder.list)]
-  weight.list <- folder.list
   study.list <- folder.list
   for (i in 1:length(folder.list)) {
     folder.list[i] <- str_split(folder.list[i],pattern = "/")
-    weight.list[i] <- folder.list[[i]][6]
-    study.list[i] <- folder.list[[i]][7]
+    study.list[i] <- folder.list[[i]][8]
   }
-  folder.data <- data.frame(weight = weight.list,
-    study = study.list)
 # Read in .csv files from each folder
   # PK data
-    read.pk.data <- function(folder.data) {
-      weight <- as.character(folder.data$weight[1])
-      study <- as.character(folder.data$study[1])
-      pk.data <- read.csv(file = paste0(sim.dir,"/",weight,"/",study,
-        "/",study,"_pk_data.csv"))
-      pk.data$study <- study
+    read.pk.data <- function(study.list) {
+      pk.data <- read.csv(file = paste0(sens.output.dir,"/",study.list,"/",
+      study.list,"_pk_data.csv"))
+      pk.data$study <- study.list
       pk.data
     }
-    pk.data <- ddply(folder.data, .(study), read.pk.data, .progress = "text")
+    pk.data <- ldply(study.list, read.pk.data, .progress = "text")
 # Read in population characteristics from pk.data
   nid <- length(unique(pk.data$ID))
   ID.seq <- 1:nid
@@ -127,30 +132,44 @@ setwd(sim.dir)
   pd.data <- ddply(pd.data, .(study,SIM,ID), alive.function,
     .progress = "text")
   pd.data$AUCTarget <- as.factor(pd.data$study)
-  levels(pd.data$AUCTarget) <- c("1 mg*h/L","2 mg*h/L","3 mg*h/L",
-    "4 mg*h/L")
+  levels(pd.data$AUCTarget) <- c("1 mg*h/L","2.2 mg*h/L","2.4 mg*h/L",
+    "2.5 mg*h/L","2.6 mg*h/L","2.8 mg*h/L","2 mg*h/L","3 mg*h/L","4 mg*h/L")
 # For biomarker and adverse effect simulations, only plot the first 50 weeks
   early.data <- pd.data[pd.data$time <= 50*24*7,]
 
 # ------------------------------------------------------------------------------
 # For overall survival plots, calculate the proportion of individuals alive
 # at each time-point
-  survival.data <- ddply(pd.data, .(AUCTarget,time), pro.alive.function)
+# Kaplan Meier Plot for survival confidence intervals
+# All individuals have the same start time, i.e., time == 0
+  pd.data$start <- 0
+  pd.data <- ddply(pd.data, .(AUCTarget,SIM,ID), stop.time.function)  # For each individual calculate their stop time
+  km.data <- ddply(pd.data, .(AUCTarget,SIM,ID), headperID)
+  km.data <- km.data[c("AUCTarget","SIM","ID","start","stop","event")]
+  S <- Surv(time = km.data$start,time2 = km.data$stop,event = km.data$event)
+  result <- survfit(formula = S ~ AUCTarget,data = km.data)
+  cols <- lapply(2:12, function(x) summary(result)[x])
+  surv.data <- do.call(data.frame, cols)
+  surv.data$AUCTarget <- as.factor(surv.data$strata)
+  levels(surv.data$AUCTarget) <- c("1 mg*h/L","2.2 mg*h/L","2.4 mg*h/L",
+    "2.5 mg*h/L","2.6 mg*h/L","2.8 mg*h/L","2 mg*h/L","3 mg*h/L","4 mg*h/L")
 # Plot overall survival over time
-  plotobj1 <- NULL
-  plotobj1 <- ggplot(survival.data)
-  plotobj1 <- plotobj1 + geom_step(aes(x = time/24/7,y = pro.alive,
-    colour = AUCTarget))
-  plotobj1 <- plotobj1 + scale_y_continuous("Probability of Survival",
+  plotobj1a <- NULL
+  plotobj1a <- ggplot()
+  plotobj1a <- plotobj1a + geom_line(aes(x = time/24/7,y = surv,
+    colour = AUCTarget),data = surv.data)
+  plotobj1a <- plotobj1a + geom_ribbon(aes(x = time/24/7,ymin = lower,
+    ymax = upper,fill = AUCTarget),data = surv.data,alpha = 0.3)
+  plotobj1a <- plotobj1a + scale_y_continuous("Probability of Survival",
     lim = c(0,1),
     breaks = seq(from = 0,to = 1,by = 0.2),
     labels = seq(from = 0,to = 1,by = 0.2))
-  plotobj1 <- plotobj1 + scale_x_continuous("Time (weeks)",
-    breaks = seq(from = 0,to = max(survival.data$time)/24/7,by = 12),
-    lim = c(0,max(survival.data$time/24/7)))
-  print(plotobj1)
+  plotobj1a <- plotobj1a + scale_x_continuous("Time (weeks)",
+    breaks = seq(from = 0,to = max(surv.data$time)/24/7,by = 12),
+    lim = c(0,max(surv.data$time/24/7)))
+  print(plotobj1a)
 
-  ggsave(plot = plotobj1,filename = "target_auc_overallsurvival.png",
+  ggsave(plot = plotobj1a,filename = "target_auc_overallsurvival.png",
     width = 20,height = 15,unit = "cm",dpi = 300)
 
 # ------------------------------------------------------------------------------
@@ -175,7 +194,7 @@ setwd(sim.dir)
   plotobj2a <- plotobj2a + scale_y_continuous("sVEGFR-3 Concentration (pg/mL)",
     lim = c(8,12))
   plotobj2a <- plotobj2a + scale_x_continuous("Time (weeks)")
-  plotobj2a <- plotobj2a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj2a <- plotobj2a + facet_wrap(~AUCTarget,ncol = 3)
   plotobj2a <- plotobj2a + theme(legend.position = "none")
   print(plotobj2a)
 
@@ -216,7 +235,7 @@ setwd(sim.dir)
   plotobj3a <- plotobj3a + scale_y_continuous("sKIT Concentration (pg/mL)",
     lim = c(8,14))
   plotobj3a <- plotobj3a + scale_x_continuous("Time (weeks)")
-  plotobj3a <- plotobj3a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj3a <- plotobj3a + facet_wrap(~AUCTarget,ncol = 3)
   plotobj3a <- plotobj3a + theme(legend.position = "none")
   print(plotobj3a)
 
@@ -256,7 +275,7 @@ setwd(sim.dir)
     colour = AUCTarget))
   plotobj4a <- plotobj4a + scale_y_continuous("Sum of Longest Diameters (mm)")
   plotobj4a <- plotobj4a + scale_x_continuous("Time (weeks)")
-  plotobj4a <- plotobj4a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj4a <- plotobj4a + facet_wrap(~AUCTarget,ncol = 3)
   plotobj4a <- plotobj4a + theme(legend.position = "none")
   print(plotobj4a)
 
@@ -295,7 +314,7 @@ setwd(sim.dir)
     colour = AUCTarget))
   plotobj5a <- plotobj5a + scale_y_log10("Absolute Neutrophil Count (x10^9)")
   plotobj5a <- plotobj5a + scale_x_continuous("Time (weeks)")
-  plotobj5a <- plotobj5a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj5a <- plotobj5a + facet_wrap(~AUCTarget,ncol = 3)
   plotobj5a <- plotobj5a + theme(legend.position = "none")
   print(plotobj5a)
 
@@ -334,7 +353,7 @@ setwd(sim.dir)
     colour = AUCTarget))
   plotobj6a <- plotobj6a + scale_y_continuous("Diastolic Blood Pressure (mmHg)")
   plotobj6a <- plotobj6a + scale_x_continuous("Time (weeks)")
-  plotobj6a <- plotobj6a + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj6a <- plotobj6a + facet_wrap(~AUCTarget,ncol = 3)
   plotobj6a <- plotobj6a + theme(legend.position = "none")
   print(plotobj6a)
 
@@ -364,7 +383,7 @@ setwd(sim.dir)
     breaks = seq(from = 0,to = 1,by = 0.2),
     labels = seq(from = 0,to = 1,by = 0.2))
   plotobj7 <- plotobj7 + scale_x_continuous("Time (weeks)")
-  plotobj7 <- plotobj7 + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj7 <- plotobj7 + facet_wrap(~AUCTarget,ncol = 3)
   print(plotobj7)
 
   ggsave(plot = plotobj7,filename = "auc_target_HFS.png",
@@ -382,7 +401,7 @@ setwd(sim.dir)
     breaks = seq(from = 0,to = 1,by = 0.2),
     labels = seq(from = 0,to = 1,by = 0.2))
   plotobj8 <- plotobj8 + scale_x_continuous("Time (weeks)")
-  plotobj8 <- plotobj8 + facet_wrap(~AUCTarget,ncol = 4)
+  plotobj8 <- plotobj8 + facet_wrap(~AUCTarget,ncol = 3)
   print(plotobj8)
 
   ggsave(plot = plotobj8,filename = "auc_target_FAT.png",
