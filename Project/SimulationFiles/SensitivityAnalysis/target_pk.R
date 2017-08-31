@@ -91,8 +91,8 @@
 # ------------------------------------------------------------------------------
 # Define targets
 ################################################################################
-  type <- "trough" # Either "auc" or "trough"
-  target <- c(0.050,0.075,0.100)	# auc in mg*h/L or trough in mg/L
+  type <- "standard" # Either "standard" or "auc" or "trough"
+  target <- NA	# auc in mg*h/L or trough in mg/L
   # concentration in ng*mL
 ################################################################################
 # Run simulations process for each value in "target"
@@ -104,61 +104,65 @@
     dir.create(target.dir)
     setwd(target.dir)
     print(paste0("Simulating ",target.dir.name))
-  # Optimise the dose for each individual that will achieve the target auc
-  # concentration by Day 28 of the first cycle of treatment
-    pop.optimise.dose <- function(input.df) {
-    # Subset the input data frame for only the first cycle
-    # Optimisation takes too long if all cycles are included
-      input.optim.data <- input.df[input.df$cyc == 1,]
-    # Initial parameter estimates
-      initial.dose <- dose	# standard 50 mg dose
-      initial.err <- 0.01
-      par <- c(initial.dose,initial.err)
-    # Optimise dose function
-      optimise.dose <- function(par) {
-      # Assign estimable parameters to objects
-        input.optim.data$amt[input.optim.data$evid == 1] <- par[1]
-        err <- par[2]
-      # Simulate concentration-time profile with each iteration of dose
-        optim.data <- pk.mod %>% mrgsim(data = input.optim.data) %>%
-          as.data.frame
-        optim.data <- auc24.function(optim.data)
-      # Pull out the predicted AUC at the target time
-        if (type == "auc") {
-          yhat <- optim.data$AUC24[optim.data$time == 28*24]
+    if (type != "standard") {
+    # Optimise the dose for each individual that will achieve the target auc
+    # concentration by Day 28 of the first cycle of treatment
+      pop.optimise.dose <- function(input.df) {
+      # Subset the input data frame for only the first cycle
+      # Optimisation takes too long if all cycles are included
+        input.optim.data <- input.df[input.df$cyc == 1,]
+      # Initial parameter estimates
+        initial.dose <- dose	# standard 50 mg dose
+        initial.err <- 0.01
+        par <- c(initial.dose,initial.err)
+      # Optimise dose function
+        optimise.dose <- function(par) {
+        # Assign estimable parameters to objects
+          input.optim.data$amt[input.optim.data$evid == 1] <- par[1]
+          err <- par[2]
+        # Simulate concentration-time profile with each iteration of dose
+          optim.data <- pk.mod %>% mrgsim(data = input.optim.data) %>%
+            as.data.frame
+          optim.data <- auc24.function(optim.data)
+        # Pull out the predicted AUC at the target time
+          if (type == "auc") {
+            yhat <- optim.data$AUC24[optim.data$time == 28*24]
+          }
+          if (type == "trough") {
+            yhat <- optim.data$IPRE[optim.data$time == 28*24]
+          }
+        # Find the value of dose that maximises the likelihood of the predicted
+        # concentration being the target AUC
+          loglik <- dnorm(target[i],yhat,yhat*err,log = TRUE)
+        # Define the objective function value that will be optimised by "optim"
+          objective <- -1*sum(loglik)
         }
-        if (type == "trough") {
-          yhat <- optim.data$IPRE[optim.data$time == 28*24]
-        }
-      # Find the value of dose that maximises the likelihood of the predicted
-      # concentration being the target AUC
-        loglik <- dnorm(target[i],yhat,yhat*err,log = TRUE)
-      # Define the objective function value that will be optimised by "optim"
-        objective <- -1*sum(loglik)
+      # Run the optim function to obtain a value for dose
+        optimised.dose <- optim(par,
+          optimise.dose,
+          hessian = FALSE,
+          method = "L-BFGS-B",
+          lower = c(0.0001,0.0001),upper = c(Inf,Inf)
+        )
+      # Create output object for each individual with their individual dose
+        dose.data <- data.frame(dose = optimised.dose$par[1])
       }
-    # Run the optim function to obtain a value for dose
-      optimised.dose <- optim(par,
-        optimise.dose,
-        hessian = FALSE,
-        method = "L-BFGS-B",
-        lower = c(0.0001,0.0001),upper = c(Inf,Inf)
-      )
-    # Create output object for each individual with their individual dose
-      dose.data <- data.frame(dose = optimised.dose$par[1])
+    # Run "pop.optimise.dose" for each individual in the population
+      dose.data <- ddply(input.pk.data, .(SIM,ID), pop.optimise.dose,
+        .progress = "text")
+    # Merge dose.data into input.pk.data
+      add.doses <- function(dose.data) {
+        ID <- dose.data$ID[1]
+        SIM <- dose.data$SIM[1]
+        input.sim.data <- input.pk.data[input.pk.data$SIM == SIM &
+          input.pk.data$ID == ID,]
+        input.sim.data$amt[input.sim.data$evid == 1] <- dose.data$dose[1]
+        input.sim.data
+      }
+      input.sim.data <- ddply(dose.data, .(SIM,ID), add.doses)
+    } else {
+      input.sim.data <- input.pk.data
     }
-  # Run "pop.optimise.dose" for each individual in the population
-    dose.data <- ddply(input.pk.data, .(SIM,ID), pop.optimise.dose,
-      .progress = "text")
-  # Merge dose.data into input.pk.data
-    add.doses <- function(dose.data) {
-      ID <- dose.data$ID[1]
-      SIM <- dose.data$SIM[1]
-      input.sim.data <- input.pk.data[input.pk.data$SIM == SIM &
-        input.pk.data$ID == ID,]
-      input.sim.data$amt[input.sim.data$evid == 1] <- dose.data$dose[1]
-      input.sim.data
-    }
-    input.sim.data <- ddply(dose.data, .(SIM,ID), add.doses)
   # Simulate concentrations for each individual given their optimised doses
     sim.data <- pk.mod %>% mrgsim(data = input.sim.data,
       carry.out = c("SIM","cyc","amt")) %>% as.data.frame
@@ -229,6 +233,8 @@
     target.sim.data <- sim.data[sim.data$time == 28*24,]
     write.csv(target.sim.data,file = paste0(target.dir.name,"_day28_data.csv"),
       quote = FALSE,row.names = FALSE)
-    write.csv(dose.data,file = paste0(target.dir.name,"_dose_data.csv"),
-      quote = FALSE,row.names = FALSE)
+    if (type != "standard") {
+      write.csv(dose.data,file = paste0(target.dir.name,"_dose_data.csv"),
+        quote = FALSE,row.names = FALSE)
+    }
   }
