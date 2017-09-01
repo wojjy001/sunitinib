@@ -8,9 +8,10 @@
 # is tracked by git and stored online.  Keeping all output (i.e., .csv and .png)
 # files in the git repository slows down synchronisation
 # PD output is saved in the same folder as PK output
+  project.name <- "SimTDM_byPK"
+  output.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/",project.name)
   study.name <- "standard"
-  study.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/SimTDM_byPK/",
-    study.name)
+  study.dir <- paste0(output.dir,"/",study.name)
   setwd(study.dir)
   pk.data <- read.csv(file = paste0(study.name,"_pk_data.csv"))	# Read in PK data
 
@@ -18,7 +19,6 @@
 # Source and run files required prior to PD simulation
 # Define simulation file directory for the project
   file.dir <- "/Volumes/Prosecutor/sunitinib/Project/SimulationFiles/"
-  project.name <- "SimTDM_byPK"
   project.dir <- paste0(file.dir,project.name)
   setwd(project.dir)
 # Functions file (package libraries, summary functions, plotting)
