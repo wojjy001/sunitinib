@@ -7,12 +7,9 @@
 # Set working directory to project output directory
   setwd(output.dir)
   # Create a folder in the directory specific to this dosing regimen
-    study.name <- "target_trough_exact"
     study.dir <- paste0(output.dir,"/",study.name)
     dir.create(study.dir)
     setwd(study.dir)
-
-# ------------------------------------------------------------------------------
 # For each individual:
   target.trough.exact <- function(input.pk.data) {
   # Simulate the first cycle given then 50 mg dose
@@ -32,6 +29,7 @@
     pk.data <- auc24.function(pk.data)	# Calculate AUC24 at each time-point
   }
 # Simulate for the population
-  pk.data <- ddply(input.pk.data, .(SIM,ID), target.trough.exact)
+  pk.data <- ddply(input.pk.data, .(SIM,ID), target.trough.exact,
+    .progress = "text")
   write.csv(pk.data,file = paste0(study.name,"_pk_data.csv"),
     quote = FALSE,row.names = FALSE)

@@ -61,27 +61,6 @@
   }
 
 # ------------------------------------------------------------------------------
-# Pharmacodynamic random effect parameters
-# Covariance terms, therefore need to use multivariate random number generator
-  if (ntotal > 1) {
-    pd.ETA.matrix <- mvrnorm(ntotal,
-      mu = rep(0,times = dim(pd.OMEGA)[1]),pd.OMEGA) %>%
-      as.data.frame
-    names(pd.ETA.matrix) <- c("ETAVEGFR3BASE","ETAVEGFR3MRT","ETAVEGFR3I50",
-      "ETASKITBASE","ETASKITMRT","ETASKITI50","ETASKITSLP","ETAKG","ETAKRSKIT",
-      "ETAKRD","ETAOBASE","ETAANCBASE","ETAANCMTT","ETAANCEMAX","ETAANCE50",
-      "ETABPBASE","ETABPSLP","ETABPMRT","ETAHFS0","ETAHFS1","ETAHFS2","ETAFAT0",
-      "ETAFAT1","ETAFAT2","ETAFAT3")
-  } else {
-    pd.ETA.matrix <- data.frame(ETAVEGFR3BASE = 0,ETAVEGFR3MRT = 0,
-      ETASKITBASE = 0,ETASKITMRT = 0,ETASKITSLP = 0,ETAVEGFR3I50 = 0,
-      ETASKITI50 = 0,ETAKG = 0,ETAKRSKIT = 0,ETAKRD = 0,ETAOBASE = 0,
-      ETAANCBASE = 0,ETAANCMTT = 0,ETAANCEMAX = 0,ETAANCE50 = 0,ETABPBASE = 0,
-      ETABPSLP = 0,ETABPMRT = 0,ETAHFS0 = 0,ETAHFS1 = 0,ETAHFS2 = 0,ETAFAT0 = 0,
-      ETAFAT1 = 0,ETAFAT2 = 0,ETAFAT3 = 0)
-  }
-
-# ------------------------------------------------------------------------------
 # Input PK data frame for simulation
   pk.ID.data <- data.frame(SIM = SIM.seq,ID = ID.seq,WT,OBASE,HFSBASE,FATBASE,
     pk.ETA.matrix)

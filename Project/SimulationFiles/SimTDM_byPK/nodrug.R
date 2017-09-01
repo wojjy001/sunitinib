@@ -1,4 +1,4 @@
-# Simulate PK following standard 50 mg dosing and 4/2 schedule
+# Simulate PK following no drug administration
 # ------------------------------------------------------------------------------
 # Set working directory to project output directory
   setwd(output.dir)
