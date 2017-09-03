@@ -6,11 +6,13 @@
 saved (not including "SimTDM_byPK" in the name)
 3. Line 16; set "output.dir" to the same directory.  All simulated output will
 be saved into the folder where the .R files are saved.
-4. Line 37; "study.name" can only be one of the 6 studies that I have defined:
+4. Line 37; "study.name" can only be one of the 8 studies that I have defined:
   - nodrug
   - standard
+  - target_trough_IPRE
   - target_trough_exact
   - target_trough_round
+  - target_auc_AUC24
   - target_auc_exact
   - target_auc_round
 Each of these "studies" have their own .R script in "SimTDM_byPK".  Changing
