@@ -129,7 +129,7 @@ $TABLE		// Calculate parent and metabolite concentrations
           double IPRE = IPREP+IPREM;	// ng/mL
           double DVP = IPREP*(1+ERRPROP1);	// ng/mL
           double DVM = IPREM*(1+ERRPROM1);	// ng/mL
-          double DV = IPRE*(1+ERRPROP1);	// ng/mL
+          double DV = DVP+DVM;	// ng/mL
 
 $CAPTURE	WT OBASE HFSBASE FATBASE
           IPREP IPREM IPRE DVP DVM DV

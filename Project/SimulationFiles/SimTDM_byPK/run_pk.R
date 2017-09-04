@@ -33,7 +33,7 @@
 # ------------------------------------------------------------------------------
 # PK simulation
 # Source the dosing regimen file
-  study.name <- "target_auc_AUC24"
+  study.name <- "target_trough_exact"
   source(paste0(study.name,".R"))	# Resulting data frame is called "pk.data"
 
 # ------------------------------------------------------------------------------
