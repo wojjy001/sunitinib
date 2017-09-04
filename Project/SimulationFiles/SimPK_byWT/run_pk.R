@@ -33,7 +33,7 @@
 # ------------------------------------------------------------------------------
 # PK simulation
 # Source the dosing regimen file
-  study.name <- "mgkg_002_exact"
+  study.name <- "standard_110kg"
   source(paste0(study.name,".R"))	# Resulting data frame is called "pk.data"
 
 # ------------------------------------------------------------------------------
@@ -63,7 +63,9 @@
   plotobj1 <- plotobj1 + geom_hline(aes(yintercept = 100),
     linetype = "dashed")
   plotobj1 <- plotobj1 + scale_y_continuous("Total Sunitinib Concentration (ng/mL)",
-    lim = c(0,NA))
+    lim = c(0,200),
+    breaks = c(0,25,50,75,100,125,150,175,200),
+    labels = c(0,25,50,75,100,125,150,175,200))
   plotobj1 <- plotobj1 + scale_x_continuous("Time (days)",
     breaks = seq(from = 0,to = max(pk.times),by = 14),
     labels = seq(from = 0,to = max(pk.times),by = 14))

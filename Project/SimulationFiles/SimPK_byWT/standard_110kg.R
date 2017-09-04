@@ -1,0 +1,19 @@
+# Simulate PK following standard 50 mg dosing and 4/2 schedule
+# Make all individuals have a weight of 110 kg
+# ------------------------------------------------------------------------------
+# Set working directory to project output directory
+  setwd(output.dir)
+  # Create a folder in the directory specific to this dosing regimen
+    study.dir <- paste0(output.dir,"/",study.name)
+    dir.create(study.dir)
+    setwd(study.dir)
+# Make all individuals have a weight of 110 kg
+  input.pk.data$WT <- 110	# kg
+# Simulate PK for the population
+  pk.data <- pk.mod %>%
+    mrgsim(data = input.pk.data,carry.out = c("SIM","amt","cyc")) %>%
+    as.data.frame
+# Calculate AUC24 at each time-point
+  pk.data <- ddply(pk.data, .(SIM,ID), auc24.function)
+  write.csv(pk.data,file = paste0(study.name,"_pk_data.csv"),
+    quote = FALSE,row.names = FALSE)

@@ -10,7 +10,7 @@
 # PD output is saved in the same folder as PK output
   project.name <- "SimPK_byWT"
   output.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/",project.name)
-  study.name <- "mgkg_001_exact"
+  study.name <- "standard_110kg"
   study.dir <- paste0(output.dir,"/",study.name)
   setwd(study.dir)
   pk.data <- read.csv(file = paste0(study.name,"_pk_data.csv"))	# Read in PK data
@@ -133,7 +133,7 @@
     plotobj1 <- plotobj1 + scale_x_continuous("Time (weeks)",
       breaks = seq(from = 0,to = max(surv.data$time)/24/7,by = 12),
       lim = c(0,max(surv.data$time/24/7)))
-    print(plotobj1)
+    # print(plotobj1)
     ggsave(plot = plotobj1,
       filename = paste0(study.name,"_overallsurvival.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
@@ -158,7 +158,7 @@
   plotobj2 <- plotobj2 + scale_y_continuous("sVEGFR-3 Concentration (pg/mL)",
     lim = c(8,12))
   plotobj2 <- plotobj2 + scale_x_continuous("Time (weeks)")
-  print(plotobj2)
+  # print(plotobj2)
   ggsave(plot = plotobj2,filename = paste0(study.name,"_sVEGFR3.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot sKIT over time
@@ -182,7 +182,7 @@
   plotobj3 <- plotobj3 + scale_y_continuous("sKIT Concentration (pg/mL)",
     lim = c(8,14))
   plotobj3 <- plotobj3 + scale_x_continuous("Time (weeks)")
-  print(plotobj3)
+  # print(plotobj3)
   ggsave(plot = plotobj3,filename = paste0(study.name,"_sKIT.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot tumour size over time
@@ -205,7 +205,7 @@
     colour = "skyblue4")
   plotobj4 <- plotobj4 + scale_y_continuous("Sum of Longest Diameters (mm)")
   plotobj4 <- plotobj4 + scale_x_continuous("Time (weeks)")
-  print(plotobj4)
+  # print(plotobj4)
   ggsave(plot = plotobj4,filename = paste0(study.name,"_tumour.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot absolute neutrophil count over time
@@ -228,7 +228,7 @@
     colour = "skyblue4")
   plotobj5 <- plotobj5 + scale_y_log10("Absolute Neutrophil Count (x10^9)")
   plotobj5 <- plotobj5 + scale_x_continuous("Time (weeks)")
-  print(plotobj5)
+  # print(plotobj5)
   ggsave(plot = plotobj5,filename = paste0(study.name,"_anc.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot diastolic blood pressure over time
@@ -251,7 +251,7 @@
     colour = "skyblue4")
   plotobj6 <- plotobj6 + scale_y_continuous("Diastolic Blood Pressure (mmHg)")
   plotobj6 <- plotobj6 + scale_x_continuous("Time (weeks)")
-  print(plotobj6)
+  # print(plotobj6)
   ggsave(plot = plotobj6,filename = paste0(study.name,"_bp.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot probability of hand-foot syndrome grade over time
@@ -266,7 +266,7 @@
     breaks = seq(from = 0,to = 1,by = 0.2),
     labels = seq(from = 0,to = 1,by = 0.2))
   plotobj7 <- plotobj7 + scale_x_continuous("Time (weeks)")
-  print(plotobj7)
+  # print(plotobj7)
   ggsave(plot = plotobj7,filename = paste0(study.name,"_HFS.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot probability of fatigue grade over time
@@ -281,6 +281,6 @@
     breaks = seq(from = 0,to = 1,by = 0.2),
     labels = seq(from = 0,to = 1,by = 0.2))
   plotobj8 <- plotobj8 + scale_x_continuous("Time (weeks)")
-  print(plotobj8)
+  # print(plotobj8)
   ggsave(plot = plotobj8,filename = paste0(study.name,"_FAT.png"),
     width = 30,height = 15,unit = "cm",dpi = 300)
