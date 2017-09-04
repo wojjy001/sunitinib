@@ -103,13 +103,17 @@
   tumour.dropout <- function(df) {
   # Drop out model parameters
     TINT <- -3.49 # Intercept of drop out
-    TDP <- 1.12 # Parameter related to occurrence of disease progression (a 20% increase in tumour size since nadir, yes/no)
-    TSLD <- 0.00105 # Parameter related to tumour size at drop out (sum of longest diamaters, mm)
-    TTIME <- 0.00707/7/24 # Parameter related to time since start of study, hours^-1
+    TDP <- 1.12 # Parameter related to occurrence of disease progression (a 20%
+    # increase in tumour size since nadir, yes/no)
+    TSLD <- 0.00105 # Parameter related to tumour size at drop out (sum of
+    # longest diamaters, mm)
+    TTIME <- 0.00707/7/24 # Parameter related to time since start of study,
+    # hours^-1
   # Identify the nadir of the tumour size
     tummin <- min(df$TUMOUR)	# Individual's minimum tumour size
     t.tummin <- df$time[df$TUMOUR == tummin]	# Time of minimum tumour size
-    df$DP <- 0	# Initially no disease progression is considered until nadir is observed
+    df$DP <- 0	# Initially no disease progression is considered until nadir is
+    # observed
     for (i in 1:nrow(df)) {
       if (df$time[i] < t.tummin) {
         df$DP[i] <- 0
