@@ -72,6 +72,16 @@
     y <- head(x,1)
     return(y)
   }
+# Find the minimum value in the data frame
+  int.min.max <- function(x,y) {
+  # Find the minimum value for the individual
+    min.value <- min(x)
+    min.time <- y[x == min.value]
+  # Find the maximum value for the individual
+    max.value <- max(x)
+    max.time <- y[x == max.value]
+    data.frame(min.time,min.value,max.time,max.value)
+  }
 
 # ------------------------------------------------------------------------------
 # Pharmacokinetic functions not written in mrgsolve code

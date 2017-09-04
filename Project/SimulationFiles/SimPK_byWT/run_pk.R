@@ -33,7 +33,7 @@
 # ------------------------------------------------------------------------------
 # PK simulation
 # Source the dosing regimen file
-  study.name <- "standard_110kg"
+  study.name <- "mgkg_100kg_exact"
   source(paste0(study.name,".R"))	# Resulting data frame is called "pk.data"
 
 # ------------------------------------------------------------------------------
@@ -62,14 +62,14 @@
     linetype = "dashed")
   plotobj1 <- plotobj1 + geom_hline(aes(yintercept = 100),
     linetype = "dashed")
-  plotobj1 <- plotobj1 + scale_y_continuous("Total Sunitinib Concentration (ng/mL)",
-    lim = c(0,200),
+  plotobj1 <- plotobj1 + scale_y_continuous(
+    "Total Sunitinib Concentration (ng/mL)",lim = c(0,200),
     breaks = c(0,25,50,75,100,125,150,175,200),
     labels = c(0,25,50,75,100,125,150,175,200))
   plotobj1 <- plotobj1 + scale_x_continuous("Time (days)",
     breaks = seq(from = 0,to = max(pk.times),by = 14),
     labels = seq(from = 0,to = max(pk.times),by = 14))
-  print(plotobj1)
+  # print(plotobj1)
   ggsave(plot = plotobj1,filename = paste0(study.name,"_IPREvstime.png"),
     height = 15,width = 20,units = "cm",dpi = 300)
 # Plot AUC24
@@ -89,12 +89,12 @@
     colour = "skyblue4")
   plotobj2 <- plotobj2 + geom_hline(aes(yintercept = 1.5),
     linetype = "dashed")
-  plotobj2 <- plotobj2 + scale_y_continuous("Total Sunitinib 24-hour AUC (mg*h/L)",
-    lim = c(0,NA))
+  plotobj2 <- plotobj2 + scale_y_continuous(
+    "Total Sunitinib 24-hour AUC (mg*h/L)",lim = c(0,NA))
   plotobj2 <- plotobj2 + scale_x_continuous("Time (days)",
     breaks = seq(from = 0,to = max(pk.times),by = 14),
     labels = seq(from = 0,to = max(pk.times),by = 14))
-  print(plotobj2)
+  # print(plotobj2)
   ggsave(plot = plotobj2,filename = paste0(study.name,"_AUC24vstime.png"),
     height = 15,width = 20,units = "cm",dpi = 300)
 # Plot IPRE versus AUC24
@@ -102,10 +102,10 @@
   plotobj3 <- ggplot(pk.data[pk.data$time == max(on.times),])
   plotobj3 <- plotobj3 + geom_point(aes(x = IPRE,y = AUC24),
     colour = "skyblue4",shape = 1,size = 2)
-  plotobj3 <- plotobj3 + scale_y_continuous("Total Sunitinib 24-hour AUC (mg*h/L)",
-    lim = c(0,NA))
-  plotobj3 <- plotobj3 + scale_x_continuous("Total Sunitinib Concentration (ng/mL)",
-    lim = c(0,NA))
-  print(plotobj3)
+  plotobj3 <- plotobj3 + scale_y_continuous(
+    "Total Sunitinib 24-hour AUC (mg*h/L)",lim = c(0,NA))
+  plotobj3 <- plotobj3 + scale_x_continuous(
+    "Total Sunitinib Concentration (ng/mL)",lim = c(0,NA))
+  # print(plotobj3)
   ggsave(plot = plotobj3,filename = paste0(study.name,"_AUC24vsIPRE.png"),
     height = 15,width = 20,units = "cm",dpi = 300)
