@@ -2,20 +2,18 @@
 ### Directories to be changed ###
 #################################
 1. Open "run_pk.R"
-2. Line 8; set "file.dir" to the directory where the "SimTDM_byPK" folder is
-saved (not including "SimTDM_byPK" in the name)
+2. Line 8; set "file.dir" to the directory where the “SimPK_byWT” folder is
+saved (not including "SimPK_byWT" in the name)
 3. Line 16; set "output.dir" to the same directory.  All simulated output will
 be saved into the folder where the .R files are saved.
-4. Line 37; "study.name" can only be one of the 8 studies that I have defined:
+4. Line 37; "study.name" can only be one of the 4 studies that I have defined:
   - nodrug
   - standard
-  - target_trough_IPRE
-  - target_trough_exact
-  - target_trough_round
-  - target_auc_AUC24
-  - target_auc_exact
-  - target_auc_round
-Each of these "studies" have their own .R script in "SimTDM_byPK".  Changing
+  - mgkg_001_exact (0.714 mg/kg dosing)
+  - mgkg_001_round (0.714 mg/kg dosing rounded to nearest 12.5 mg)
+  - mgkg_002_exact (0.714 mg/kg dosing capped between 12.5 and 87.5 mg)
+  - mgkg_002_round (0.714 mg/kg dosing rounded to nearest 12.5 mg and capped)
+Each of these "studies" have their own .R script in "SimPK_byWT".  Changing
 "study.name" allows "run_pk.R" to source the correct study script
 5. Open "run_pd.R"
 6. Line 12; change "output.dir" to the same as Step 3

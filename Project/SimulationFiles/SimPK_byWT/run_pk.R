@@ -6,7 +6,7 @@
   rm(list = ls(all = TRUE))
 # Define simulation file directory for the project
   file.dir <- "/Volumes/Prosecutor/sunitinib/Project/SimulationFiles/"
-  project.name <- "SimTDM_byPK"
+  project.name <- "SimPK_byWT"
   project.dir <- paste0(file.dir,project.name)
   setwd(project.dir)
 # Define output directory
@@ -33,7 +33,7 @@
 # ------------------------------------------------------------------------------
 # PK simulation
 # Source the dosing regimen file
-  study.name <- "target_auc_AUC24"
+  study.name <- "mgkg_002_exact"
   source(paste0(study.name,".R"))	# Resulting data frame is called "pk.data"
 
 # ------------------------------------------------------------------------------
