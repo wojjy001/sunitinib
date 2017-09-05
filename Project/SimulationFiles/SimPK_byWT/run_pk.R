@@ -33,7 +33,7 @@
 # ------------------------------------------------------------------------------
 # PK simulation
 # Source the dosing regimen file
-  study.name <- "mgkg_100kg_exact"
+  study.name <- "new_os_test"
   source(paste0(study.name,".R"))	# Resulting data frame is called "pk.data"
 
 # ------------------------------------------------------------------------------
