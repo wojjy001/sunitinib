@@ -6,6 +6,7 @@
   library(ggplot2)  # Plotting
   library(grid)   # Plotting
   library(GGally)	# For plotting plotmatrix
+  library(gridExtra)	# Extra plotting functions (grid.arrange function!!!)
   library(plyr)  # Split and rearrange data, ddply function
   library(dplyr)  # New plyr
   library(mrgsolve) # Metrum differential equation solver for pharmacometrics
