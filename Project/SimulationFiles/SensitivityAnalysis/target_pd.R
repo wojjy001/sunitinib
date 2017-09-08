@@ -31,18 +31,18 @@
     folder.list[i] <- str_split(folder.list[i],pattern = "/")
     study.list[i] <- folder.list[[i]][7]
   }
-  study.list <- head(study.list,2)
+  # study.list <- head(study.list,2)
 # OR just list the one folder you want to process
   # study.list <- "target_standard_NA_70kg"
 
 # ------------------------------------------------------------------------------
 # Simulate and process pd output for each pk study design
-  simulate.pd <- function(study.list) {
-    study.dir <- paste0(sens.output.dir,"/",study.list,"/")
+  for (i in 1:length(study.list)) {
+    study.dir <- paste0(sens.output.dir,"/",study.list[i],"/")
     setwd(study.dir)
   # Read in pk .csv file from the study folder
-    pk.data <- read.csv(file = paste0(study.list,"_pk_data.csv"))
-    pk.data$study <- study.list
+    pk.data <- read.csv(file = paste0(study.list[i],"_pk_data.csv"))
+    pk.data$study <- study.list[i]
   # Read in population characteristics from pk.data
     nid <- length(unique(pk.data$ID))
     ID.seq <- 1:nid
@@ -52,13 +52,13 @@
 
   # Covariates
   # Baseline tumour size
-    first.OBASE <- exp(log(rnorm(nid,mean = 195,sd = 120)))
+    OBASE <- exp(log(rnorm(nid,mean = 195,sd = 120)))
     repeat {
-      new.OBASE <- first.OBASE[first.OBASE == "NaN"]
+      new.OBASE <- OBASE[OBASE == "NaN"]
       new.OBASE <- exp(log(rnorm(length(new.OBASE),mean = 195,sd = 120)))
-      if (length(new.OBASE[new.OBASE == "NaN"]) == 0) break
+      OBASE <- c(OBASE[OBASE != "NaN"],new.OBASE)
+      if (length(OBASE[OBASE == "NaN"]) == 0) break
     }
-    OBASE <- c(first.OBASE[first.OBASE != "NaN"],new.OBASE)
   # Baseline hand-foot syndrome grade
     hfs.grade0.prob <- 0.95
     hfs.grade1.prob <- 0.02
@@ -170,7 +170,7 @@
     print(plotobj1a)
 
     ggsave(plot = plotobj1a,
-      filename = paste0(study.list,"_overallsurvival.png"),
+      filename = paste0(study.list[i],"_overallsurvival.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot sVEGFR-3 over time
@@ -199,7 +199,7 @@
     print(plotobj2a)
 
     ggsave(plot = plotobj2a,
-      filename = paste0(study.list,"_sVEGFR3.png"),
+      filename = paste0(study.list[i],"_sVEGFR3.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot sKIT over time
@@ -228,7 +228,7 @@
     print(plotobj3a)
 
     ggsave(plot = plotobj3a,
-      filename = paste0(study.list,"_sKIT.png"),
+      filename = paste0(study.list[i],"_sKIT.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot tumour size over time
@@ -255,7 +255,7 @@
     plotobj4a <- plotobj4a + theme(legend.position = "none")
     print(plotobj4a)
 
-    ggsave(plot = plotobj4a,filename = paste0(study.list,"_tumour_facet.png"),
+    ggsave(plot = plotobj4a,filename = paste0(study.list[i],"_tumour_facet.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot absolute neutrophil count over time
@@ -276,13 +276,14 @@
       ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
     plotobj5a <- plotobj5a + geom_line(aes(x = time/24/7,y = med,
       colour = AUCTarget))
-    plotobj5a <- plotobj5a + scale_y_log10("Absolute Neutrophil Count (x10^9)")
+    plotobj5a <- plotobj5a + scale_y_log10(
+      "Absolute Neutrophil Count (x10^9)")
     plotobj5a <- plotobj5a + scale_x_continuous("Time (weeks)")
     # plotobj5a <- plotobj5a + facet_wrap(~AUCTarget,ncol = 3)
     plotobj5a <- plotobj5a + theme(legend.position = "none")
     print(plotobj5a)
 
-    ggsave(plot = plotobj5a,filename = paste0(study.list,"_anc.png"),
+    ggsave(plot = plotobj5a,filename = paste0(study.list[i],"_anc.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot diastolic blood pressure over time
@@ -303,23 +304,33 @@
       ymax = CI20hi,fill = AUCTarget),alpha = 0.1)
     plotobj6a <- plotobj6a + geom_line(aes(x = time/24/7,y = med,
       colour = AUCTarget))
-    plotobj6a <- plotobj6a + scale_y_continuous("Diastolic Blood Pressure (mmHg)")
+    plotobj6a <- plotobj6a + scale_y_continuous(
+      "Diastolic Blood Pressure (mmHg)")
     plotobj6a <- plotobj6a + scale_x_continuous("Time (weeks)")
     # plotobj6a <- plotobj6a + facet_wrap(~AUCTarget,ncol = 3)
     plotobj6a <- plotobj6a + theme(legend.position = "none")
     print(plotobj6a)
 
-    ggsave(plot = plotobj6a,filename = paste0(study.list,"_bp.png"),
+    ggsave(plot = plotobj6a,filename = paste0(study.list[i],"_bp.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot probability of hand-foot syndrome grade over time
+  # Summary count function
+    summary.count.function <- function(x) {
+      total.n <- ntotal
+      n <- length(x)
+      result <- n/total.n
+      names(result) <- "pro"
+      result
+    }
     summary.HFS <- ddply(early.data, .(AUCTarget,time,HFS),
       function(early.data) summary.count.function(early.data$HFS))
     summary.HFS$Grade <- as.factor(summary.HFS$HFS)
     plotobj7 <- NULL
     plotobj7 <- ggplot(summary.HFS)
     plotobj7 <- plotobj7 + geom_line(aes(x = time/24/7,y = pro,colour = Grade))
-    plotobj7 <- plotobj7 + scale_y_continuous("Probability of Hand-Foot Syndrome Grade",
+    plotobj7 <- plotobj7 + scale_y_continuous(
+      "Probability of Hand-Foot Syndrome Grade",
       lim = c(0,1),
       breaks = seq(from = 0,to = 1,by = 0.2),
       labels = seq(from = 0,to = 1,by = 0.2))
@@ -327,7 +338,7 @@
     # plotobj7 <- plotobj7 + facet_wrap(~AUCTarget,ncol = 3)
     print(plotobj7)
 
-    ggsave(plot = plotobj7,filename = paste0(study.list,"_HFS.png"),
+    ggsave(plot = plotobj7,filename = paste0(study.list[i],"_HFS.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Summarise and plot probability of fatigue grade over time
@@ -345,14 +356,13 @@
     # plotobj8 <- plotobj8 + facet_wrap(~AUCTarget,ncol = 3)
     print(plotobj8)
 
-    ggsave(plot = plotobj8,filename = paste0(study.list,"_FAT.png"),
+    ggsave(plot = plotobj8,filename = paste0(study.list[i],"_FAT.png"),
       width = 30,height = 15,unit = "cm",dpi = 300)
 
   # Clean up and save the PD simulated data
     output.pd.data <- pd.data[c("study","SIM","ID","time","cyc","amt","IPREP",
-      "IPREM","IPRE","AUC24","TUMOUR","ANC","BP","WT","OBASE","HFSBASE","FATBASE",
-      "IPRE_VEGFR3","IPRE_SKIT","HFS","FAT","status")]
-    write.csv(output.pd.data,file = paste0(study.list,"_pd_data.csv"),
+      "IPREM","IPRE","AUC24","TUMOUR","ANC","BP","WT","OBASE","HFSBASE",
+      "FATBASE","IPRE_VEGFR3","IPRE_SKIT","HFS","FAT","status")]
+    write.csv(output.pd.data,file = paste0(study.list[i],"_pd_data.csv"),
       quote = FALSE,row.names = FALSE)
   }
-  ldply(study.list, simulate.pd, .progress = "text")

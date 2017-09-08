@@ -53,14 +53,14 @@
       "CI60hi","CI40lo","CI40hi","CI20lo","CI20hi")
     result
   }
-# Summary count function
-  summary.count.function <- function(x) {
-    total.n <- ntotal
-    n <- length(x)
-    result <- n/total.n
-    names(result) <- "pro"
-    result
-  }
+# # Summary count function
+#   summary.count.function <- function(x,ntotal) {
+#     total.n <- ntotal
+#     n <- length(x)
+#     result <- n/total.n
+#     names(result) <- "pro"
+#     result
+#   }
 # Interquartile range
   CI50lo <- function(x) quantile(x,probs = 0.25)
   CI50hi <- function(x) quantile(x,probs = 0.75)
