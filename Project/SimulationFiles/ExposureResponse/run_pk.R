@@ -25,7 +25,7 @@
 # Define PK and PD simulation times
   source("times.R")
 # Create population of unique individuals
-  dose <- 0	# mg, initial dose to be administered to all individuals
+  dose <- 50	# mg, initial dose to be administered to all individuals
   source("population.R") # Resulting data frame is called "input.pk.data"
   # Ignore the warnings associated with:
   # In log(rnorm(length(new.OBASE), mean = 195, sd = 120)) : NaNs produced
@@ -33,8 +33,9 @@
 # ------------------------------------------------------------------------------
 # PK simulation
 # Source the dosing regimen file
-  study.name <- "nodrug"
-  source(paste0(study.name,".R"))	# Resulting data frame is called "pk.data"
+  target <- 1.8	# auc, mg*h/L
+  study.name <- "target_1.8"
+  source("target_auc.R")	# Resulting data frame is called "pk.data"
 
 # ------------------------------------------------------------------------------
 # Plot results
@@ -87,7 +88,7 @@
     ymax = CI20hi),fill = "skyblue4",alpha = 0.2)
   plotobj2 <- plotobj2 + geom_line(aes(x = time/24,y = med),
     colour = "skyblue4")
-  plotobj2 <- plotobj2 + geom_hline(aes(yintercept = 1.5),
+  plotobj2 <- plotobj2 + geom_hline(aes(yintercept = target),
     linetype = "dashed")
   plotobj2 <- plotobj2 + scale_y_continuous(
     "Total Sunitinib 24-hour AUC (mg*h/L)",lim = c(0,NA))
