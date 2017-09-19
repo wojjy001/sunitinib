@@ -5,6 +5,7 @@
   library(MBESS)	# cor2cov function
   library(ggplot2)  # Plotting
   library(grid)   # Plotting
+  library(gridExtra)	# "grid.arrange" function!
   library(GGally)	# For plotting plotmatrix
   library(plyr)  # Split and rearrange data, ddply function
   library(dplyr)  # New plyr
