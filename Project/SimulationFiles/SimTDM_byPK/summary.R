@@ -388,9 +388,10 @@
   plotobj18 <- plotobj12 + theme(legend.position = "none")
   plotobj18 <- plotobj18 + ggtitle("(b)")
   plotobj19 <- plotobj2 + ggtitle("(c)")
+  plotobj19 <- plotobj19 + theme(legend.key.size = unit(0.2,units = "cm"))
   plotobj19 <- plotobj19 + guides(col = guide_legend(ncol = 1,byrow = TRUE))
   plotobj20 <- grid.arrange(plotobj17,plotobj18,plotobj19,ncol = 1,
-    heights = c(5,5,5.5))
+    heights = c(5,5,6))
   ggsave(plot = plotobj20,filename = "Standard_v_TDMround.pdf",
     width = 8.4,height = 21,units = "cm",dpi = 300)
   ggsave(plot = plotobj20,filename = "Standard_v_TDMround.png",
