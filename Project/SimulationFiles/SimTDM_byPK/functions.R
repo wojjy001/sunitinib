@@ -250,4 +250,4 @@
 # ------------------------------------------------------------------------------
 # Plotting functions
 # Define a custom ggplot2 theme
-  theme_bw2 <- theme_set(theme_bw(base_size = 14))
+  theme_bw2 <- theme_set(theme_bw(base_size = 8))
