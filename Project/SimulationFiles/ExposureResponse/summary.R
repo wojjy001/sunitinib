@@ -45,13 +45,13 @@
 # ------------------------------------------------------------------------------
 # Summarise outcomes at week 50
 # Tumour model, for example, doesn't extrapolate well beyond this time-point
-  pd52.data <- pd.data[pd.data$time == 52*7*24,]
+  pd22.data <- pd.data[pd.data$time == 22*7*24,]
 
 # ------------------------------------------------------------------------------
 # Population Summaries
 # Tumour versus 24-hour AUC
   plotobj1 <- NULL
-  plotobj1 <- ggplot(pd52.data)
+  plotobj1 <- ggplot(pd22.data)
   plotobj1 <- plotobj1 + geom_boxplot(aes(x = AUC24r,y = TUMOUR,
     colour = study,fill = study),alpha = 0.3)
   plotobj1 <- plotobj1 + scale_y_continuous(
@@ -67,7 +67,7 @@
     height = 15,width = 20,units = "cm",dpi = 300)
 # ANC versus 24-hour AUC
   plotobj2 <- NULL
-  plotobj2 <- ggplot(pd52.data)
+  plotobj2 <- ggplot(pd22.data)
   plotobj2 <- plotobj2 + geom_boxplot(aes(x = AUC24r,y = ANC,
     colour = study,fill = study),alpha = 0.3)
   plotobj2 <- plotobj2 + scale_y_log10("ANC (x10^9)",
@@ -82,7 +82,7 @@
     height = 15,width = 20,units = "cm",dpi = 300)
 # dBP versus 24-hour AUC
   plotobj3 <- NULL
-  plotobj3 <- ggplot(pd52.data)
+  plotobj3 <- ggplot(pd22.data)
   plotobj3 <- plotobj3 + geom_boxplot(aes(x = AUC24r,y = BP,
     colour = study,fill = study),alpha = 0.3)
   plotobj3 <- plotobj3 + scale_y_continuous("dBP (mmHg)",
@@ -97,7 +97,7 @@
     height = 15,width = 20,units = "cm",dpi = 300)
 # sVEGFR-3 versus 24-hour AUC
   plotobj4 <- NULL
-  plotobj4 <- ggplot(pd52.data)
+  plotobj4 <- ggplot(pd22.data)
   plotobj4 <- plotobj4 + geom_boxplot(aes(x = AUC24r,y = IPRE_VEGFR3,
     colour = study,fill = study),alpha = 0.3)
   plotobj4 <- plotobj4 + scale_y_continuous("sVEGFR-3 (pg/mL)")
@@ -111,7 +111,7 @@
     height = 15,width = 20,units = "cm",dpi = 300)
 # sKIT versus 24-hour AUC
   plotobj5 <- NULL
-  plotobj5 <- ggplot(pd52.data)
+  plotobj5 <- ggplot(pd22.data)
   plotobj5 <- plotobj5 + geom_boxplot(aes(x = AUC24r,y = IPRE_SKIT,
     colour = study,fill = study),alpha = 0.3)
   plotobj5 <- plotobj5 + scale_y_continuous("sKIT (pg/mL)")
@@ -124,9 +124,9 @@
   ggsave(plot = plotobj5,filename = paste0("SKITvsAUC24.png"),
     height = 15,width = 20,units = "cm",dpi = 300)
 # Hand-Foot Syndrome Grade versus 24-hour AUC
-  pd52.data$HFSf <- as.factor(pd52.data$HFS)
+  pd22.data$HFSf <- as.factor(pd22.data$HFS)
   plotobj6 <- NULL
-  plotobj6 <- ggplot(pd52.data)
+  plotobj6 <- ggplot(pd22.data)
   plotobj6 <- plotobj6 + geom_bar(aes(x = AUC24r,fill = HFSf),stat = "count")
   plotobj6 <- plotobj6 + scale_y_continuous("Number of Individuals")
   plotobj6 <- plotobj6 + scale_x_continuous(
@@ -138,9 +138,9 @@
   ggsave(plot = plotobj6,filename = paste0("HFSvsAUC24.png"),
     height = 15,width = 20,units = "cm",dpi = 300)
 # Fatigue Grade versus 24-hour AUC
-  pd52.data$FATf <- as.factor(pd52.data$FAT)
+  pd22.data$FATf <- as.factor(pd22.data$FAT)
   plotobj7 <- NULL
-  plotobj7 <- ggplot(pd52.data)
+  plotobj7 <- ggplot(pd22.data)
   plotobj7 <- plotobj7 + geom_bar(aes(x = AUC24r,fill = FATf),stat = "count")
   plotobj7 <- plotobj7 + scale_y_continuous("Number of Individuals")
   plotobj7 <- plotobj7 + scale_x_continuous(
@@ -168,7 +168,7 @@
   cols <- lapply(2:12, function(x) summary(result)[x])
   surv.data <- do.call(data.frame, cols)
   surv.data$strata <- as.factor(surv.data$strata)
-  levels(surv.data$strata) <- levels(as.factor(pd52.data$AUC24r))
+  levels(surv.data$strata) <- levels(as.factor(pd22.data$AUC24r))
 # Plot overall survival
   plotobj8 <- NULL
   plotobj8 <- ggplot()
@@ -193,7 +193,7 @@
 # Individual Summaries
 # Find 12 random individuals
   rand.ind <- sample(unique(pd.data$ID),12)
-  rand.data <- pd52.data[pd52.data$ID %in% rand.ind,]
+  rand.data <- pd22.data[pd22.data$ID %in% rand.ind,]
 
 # Tumour versus 24-hour AUC
   plotobj9 <- NULL
@@ -315,7 +315,7 @@
 # Increasing dose for efficacy
   auc1 <- 1	# Original AUC
   auc2 <- 1.5	# Target AUC
-  subset.data <- pd52.data[pd52.data$AUC24r == auc1 | pd52.data$AUC24r == auc2,]
+  subset.data <- pd22.data[pd22.data$AUC24r == auc1 | pd22.data$AUC24r == auc2,]
   pd.ratio <- function(subset.data) {
     TUMOUR.ratio <- subset.data$TUMOUR[subset.data$AUC24r == auc2]/
       subset.data$TUMOUR[subset.data$AUC24r == auc1]
@@ -396,7 +396,7 @@
 # Decreasing dose for toxicity
   auc1 <- 2	# Original AUC
   auc2 <- 1.5	# Target AUC
-  subset.data <- pd52.data[pd52.data$AUC24r == auc1 | pd52.data$AUC24r == auc2,]
+  subset.data <- pd22.data[pd22.data$AUC24r == auc1 | pd22.data$AUC24r == auc2,]
   pd.ratio <- function(subset.data) {
     TUMOUR.ratio <- subset.data$TUMOUR[subset.data$AUC24r == auc2]/
       subset.data$TUMOUR[subset.data$AUC24r == auc1]
@@ -477,7 +477,7 @@
 # Decreasing dose for toxicity
   auc1 <- 3	# Original AUC
   auc2 <- 1.5	# Target AUC
-  subset.data <- pd52.data[pd52.data$AUC24r == auc1 | pd52.data$AUC24r == auc2,]
+  subset.data <- pd22.data[pd22.data$AUC24r == auc1 | pd22.data$AUC24r == auc2,]
   pd.ratio <- function(subset.data) {
     TUMOUR.ratio <- subset.data$TUMOUR[subset.data$AUC24r == auc2]/
       subset.data$TUMOUR[subset.data$AUC24r == auc1]
@@ -571,7 +571,7 @@
 # fatigue grades with a different level of sunitinib exposure
   auc1 <- 1	# Original AUC
   auc2 <- 1.5	# Target AUC
-  subset.data <- pd52.data[pd52.data$AUC24r == auc1 | pd52.data$AUC24r == auc2,]
+  subset.data <- pd22.data[pd22.data$AUC24r == auc1 | pd22.data$AUC24r == auc2,]
   cat.change <- function(subset.data) {
     HFS.change <- subset.data$HFS[subset.data$AUC24r == auc2]-
       subset.data$HFS[subset.data$AUC24r == auc1]
@@ -598,7 +598,7 @@
     "Percentage of Population",
     lim = c(0,100),breaks = seq(0,100,10),labels = seq(0,100,10))
   plotobj23 <- plotobj23 + scale_x_continuous(
-    "Difference in Grades between Exposures",
+    "Absolute Difference between Exposures (Grade)",
     breaks = seq(-4,4,1),labels = c(-4,-3,-2,-1,0,"+1","+2","+3","+4"))
   plotobj23 <- plotobj23 + labs(fill = "",
     colour = "")
@@ -614,7 +614,7 @@
 # fatigue grades with a different level of sunitinib exposure
   auc1 <- 2	# Original AUC
   auc2 <- 1.5	# Target AUC
-  subset.data <- pd52.data[pd52.data$AUC24r == auc1 | pd52.data$AUC24r == auc2,]
+  subset.data <- pd22.data[pd22.data$AUC24r == auc1 | pd22.data$AUC24r == auc2,]
   cat.change <- function(subset.data) {
     HFS.change <- subset.data$HFS[subset.data$AUC24r == auc2]-
       subset.data$HFS[subset.data$AUC24r == auc1]
@@ -641,7 +641,7 @@
     "Percentage of Population",
     lim = c(0,100),breaks = seq(0,100,10),labels = seq(0,100,10))
   plotobj24 <- plotobj24 + scale_x_continuous(
-    "Difference in Grades between Exposures",
+    "Absolute Difference between Exposures (Grade)",
     breaks = seq(-4,4,1),labels = c(-4,-3,-2,-1,0,"+1","+2","+3","+4"))
   plotobj24 <- plotobj24 + labs(fill = "",
     colour = "")
@@ -657,7 +657,7 @@
 # fatigue grades with a different level of sunitinib exposure
   auc1 <- 3	# Original AUC
   auc2 <- 1.5	# Target AUC
-  subset.data <- pd52.data[pd52.data$AUC24r == auc1 | pd52.data$AUC24r == auc2,]
+  subset.data <- pd22.data[pd22.data$AUC24r == auc1 | pd22.data$AUC24r == auc2,]
   cat.change <- function(subset.data) {
     HFS.change <- subset.data$HFS[subset.data$AUC24r == auc2]-
       subset.data$HFS[subset.data$AUC24r == auc1]
@@ -684,7 +684,7 @@
     "Percentage of Population",
     lim = c(0,100),breaks = seq(0,100,10),labels = seq(0,100,10))
   plotobj25 <- plotobj25 + scale_x_continuous(
-    "Difference in Grades between Exposures",
+    "Absolute Difference between Exposures (Grade)",
     breaks = seq(-4,4,1),labels = c(-4,-3,-2,-1,0,"+1","+2","+3","+4"))
   plotobj25 <- plotobj25 + labs(fill = "",
     colour = "")
