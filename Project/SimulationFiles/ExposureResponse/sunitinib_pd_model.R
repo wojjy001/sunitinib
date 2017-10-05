@@ -15,6 +15,8 @@ $SET			atol = 1e-8, rtol = 1e-8
 
 $CMT			// List of compartments
           // Initial conditions specified in $MAIN
+          VEGF,
+          VEGFR2,
           VEGFR3,
           SKIT,
           SKITP,
@@ -29,6 +31,17 @@ $CMT			// List of compartments
           CHZDROP
 
 $PARAM		// Population parameters
+          // VEGF
+          POPVEGFBASE = 59.8,	// Baseline VEGF, pg/mL
+          POPVEGFMRT = 3.75*24,	// Mean resident time, days (converted to hours)
+          POPVEGFHILL = 3.31,	// Hill coefficient
+          POPVEGFSLP = 0.035/1000,	// Slope for linear VEGF progression, hours^-1
+
+          // sVEGFR-2
+          POPVEGFR2BASE = 8670,	// Baseline sVEGFR-2, pg/mL
+          POPVEGFR2MRT = 23.1*24,	// Mean residence time, days (converted to hours)
+          POPVEGFR2HILL = 1.54,	// Hill coefficient
+
           // sVEGFR-3
           POPVEGFR3BASE = 63900,	// Baseline sVEGFR-3, pg/mL
           POPVEGFR3MRT = 16.7*24,	// Mean residence time, days (converted to hours)
@@ -106,6 +119,13 @@ $PARAM		// Population parameters
              ALPHD = 1.273,	// Shape parameter in the Weibull density function for the drop out model
 
           // Pre-defined between subject variability
+          ETAVEGFBASE = 0,
+          ETAVEGFMRT = 0,
+          ETAVEGFI50 = 0,
+          ETAVEGFSLP = 0,
+          ETAVEGFR2BASE = 0,
+          ETAVEGFR2MRT = 0,
+          ETAVEGFR2I50 = 0,
           ETAVEGFR3BASE = 0,
           ETAVEGFR3MRT = 0,
           ETAVEGFR3I50 = 0,
@@ -146,6 +166,11 @@ $PARAM		// Population parameters
 $OMEGA		// Between-subject variability
           // Biomarkers
           @annotated
+          BSVVEGFBASE: 0.252 : ETA on baseline VEGF
+          BSVVEGFMRT: 0.06 : ETA on mean resident time for VEGF
+          BSVVEGFSLP: 2.95 : ETA on slope for the disease progression model
+          BSVVEGFR2BASE: 0.0369 : ETA on baseline sVEGFR-2
+          BSVVEGFR2MRT: 0.06 : ETA on mean resident time for sVEGFR-2
           BSVVEGFR3BASE: 0.186 : ETA on baseline sVEGFR-3
           BSVVEGFR3MRT : 0.06 : ETA on mean residence time for sVEGFR-3
           BSVSKITBASE: 0.254 : ETA on baseline sKIT
@@ -154,9 +179,12 @@ $OMEGA		// Between-subject variability
 
 $OMEGA		// Between-subject variability
           // Biomarkers
+          ETA on daily sunitinib AUC resulting in half of its maximum effect
           @annotated @block
-          BSVVEGFR3I50: 0.398 : ETA on daily sunitinib AUC resulting in half of its maximum effect on sVEGFR-3
-          BSVSKITI50: 0.936 5.77 : ETA on daily sunitinib AUC resulting in half of its maximum effect on sKIT
+          BSVVEGFI50: 0.253 : ETA on VEGF I50
+          BSVVEGFR2I50: 0.198 0.189 : ETA on VEGFR2 I50
+          BSVVEGFR3I50: 0.238 0.252 0.398 : ETA on VEGFR3 I50
+          BSVSKITI50: 0.218 0.297 0.936 5.77 : ETA on SKIT I50
 
 $OMEGA		// Between-subject variability
           // Tumour
@@ -205,6 +233,19 @@ $OMEGA		// Between-subject variability
           BSVFAT3: 0.707281	: ETA on transition from grade 3
 
 $MAIN			// Individual parameter values
+          // VEGF
+          double VEGFBASE = POPVEGFBASE*exp(ETAVEGFBASE);
+          double VEGFMRT = POPVEGFMRT*exp(ETAVEGFMRT);
+          double VEGFI50 = exp(BSVVEGFI50);
+          double VEGFHILL = POPVEGFHILL;
+          double VEGFSLP = POPVEGFSLP*exp(ETAVEGFSLP);
+
+          // sVEGFR-2
+          double VEGFR2BASE = POPVEGFR2BASE*exp(ETAVEGFR2BASE);
+          double VEGFR2MRT = POPVEGFR2MRT*exp(ETAVEGFR2MRT);
+          double VEGFR2I50 = exp(ETAVEGFR2I50);
+          double VEGFR2HILL = POPVEGFR2HILL;
+
           // sVEGFR-3
           double VEGFR3BASE = POPVEGFR3BASE*exp(ETAVEGFR3BASE);
           double VEGFR3MRT = POPVEGFR3MRT*exp(ETAVEGFR3MRT);
@@ -235,10 +276,14 @@ $MAIN			// Individual parameter values
           double BPMRT = POPBPMRT*exp(ETABPMRT);
 
           // Natural linear progression of biomarker over time
+          double VEGFDP = VEGFBASE*(1+VEGFSLP*TIME);
+          double VEGFR2DP = VEGFR2BASE;
           double VEGFR3DP = VEGFR3BASE;
           double SKITDP = SKITBASE*(1+SKITSLP*TIME);
 
           // Compartment initial conditions
+          VEGF_0 = VEGFBASE;
+          VEGFR2_0 = VEGFR2BASE;
           VEGFR3_0 = VEGFR3BASE;
           SKIT_0 = SKITBASE;
           SKITP_0 = SKITBASE;	// sKIT time-course in untreated patients
@@ -253,6 +298,10 @@ $MAIN			// Individual parameter values
           CHZDROP_0 = 0;
 
 $ODE			// Rate constants
+          double VEGFKIN = VEGFDP*(1/VEGFMRT);
+          double VEGFKOUT = (1/VEGFMRT)*(1-((1*pow(AUC24,VEGFHILL))/(pow(VEGFI50,VEGFHILL)+pow(AUC24,VEGFHILL))));
+          double VEGFR2KIN = VEGFR2DP*(1/VEGFR2MRT)*(1-((1*pow(AUC24,VEGFR2HILL))/(pow(VEGFR2I50,VEGFR2HILL)+pow(AUC24,VEGFR2HILL))));
+          double VEGFR2KOUT = 1/VEGFR2MRT;
           double VEGFR3KIN = VEGFR3DP*(1/VEGFR3MRT)*(1-((1*AUC24)/(VEGFR3I50+AUC24)));
           double VEGFR3KOUT = 1/VEGFR3MRT;
           double SKITKIN = SKITDP*(1/SKITMRT)*(1-((1*AUC24)/(SKITI50+AUC24)));
@@ -261,6 +310,8 @@ $ODE			// Rate constants
           double BPKOUT = 1/BPMRT;
 
           // Biomarkers
+          dxdt_VEGF = VEGFKIN -VEGFKOUT*VEGF;
+          dxdt_VEGFR2 = VEGFR2KIN -VEGFR2KOUT*VEGFR2;
           dxdt_VEGFR3 = VEGFR3KIN -VEGFR3KOUT*VEGFR3;
           dxdt_SKIT = SKITKIN -SKITKOUT*SKIT;
           dxdt_SKITP = SKITKIN/(1-((1*AUC24)/(SKITI50+AUC24))) -SKITKOUT*SKITP;
@@ -298,6 +349,8 @@ $ODE			// Rate constants
           if (TIMEW > 4) dxdt_CHZDROP = LAMBD*ALPHD*pow(TIMEW,ALPHD-1);
 
 $TABLE		// Biomarkers
+          double IPRE_VEGF = log(VEGF);
+          double IPRE_VEGFR2 = log(VEGFR2);
           double IPRE_VEGFR3 = log(VEGFR3);
           double IPRE_SKIT = log(SKIT);
 
@@ -416,7 +469,7 @@ $TABLE		// Biomarkers
           double DROP = exp(-CHZDROP);	// Drop out probability
 
 $CAPTURE	AUC24 WT OBASE HFSBASE FATBASE
-          IPRE_VEGFR3 IPRE_SKIT
+          IPRE_VEGF IPRE_VEGFR2 IPRE_VEGFR3 IPRE_SKIT
           TIMEW SURV DROP RSURV RDROP
           HFSPROB00 HFSPROB01 HFSPROB02 HFSPROB03
           HFSPROB10 HFSPROB11 HFSPROB12 HFSPROB13

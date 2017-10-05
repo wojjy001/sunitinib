@@ -10,7 +10,7 @@
 # PD output is saved in the same folder as PK output
   project.name <- "SimTDM_byPK"
   output.dir <- paste0("/Volumes/Prosecutor/sunitinib_nogit/",project.name)
-  study.name <- "target_auc_exact"
+  study.name <- "target_trough_round"
   study.dir <- paste0(output.dir,"/",study.name)
   setwd(study.dir)
   pk.data <- read.csv(file = paste0(study.name,"_pk_data.csv"))	# Read in PK data
@@ -45,18 +45,21 @@
     pd.ETA.matrix <- mvrnorm(ntotal,
       mu = rep(0,times = dim(pd.OMEGA)[1]),pd.OMEGA) %>%
       as.data.frame
-    names(pd.ETA.matrix) <- c("ETAVEGFR3BASE","ETAVEGFR3MRT","ETAVEGFR3I50",
-      "ETASKITBASE","ETASKITMRT","ETASKITI50","ETASKITSLP","ETAKG","ETAKRSKIT",
-      "ETAKRD","ETAOBASE","ETAANCBASE","ETAANCMTT","ETAANCEMAX","ETAANCE50",
-      "ETABPBASE","ETABPSLP","ETABPMRT","ETAHFS0","ETAHFS1","ETAHFS2","ETAFAT0",
-      "ETAFAT1","ETAFAT2","ETAFAT3")
+    names(pd.ETA.matrix) <- c("ETAVEGFBASE","ETAVEGFMRT","ETAVEGFSLP",
+      "ETAVEGFR2BASE","ETAVEGFR2MRT","ETAVEGFR3BASE","ETAVEGFR3MRT",
+      "ETASKITBASE","ETASKITMRT","ETASKITSLP","ETAVEGFI50","ETAVEGFR2I50",
+      "ETAVEGFR3I50","ETASKITI50","ETAKG","ETAKRSKIT","ETAKRD","ETAOBASE",
+      "ETAANCBASE","ETAANCMTT","ETAANCEMAX","ETAANCE50","ETABPBASE","ETABPSLP",
+      "ETABPMRT","ETAHFS0","ETAHFS1","ETAHFS2","ETAFAT0","ETAFAT1","ETAFAT2",
+      "ETAFAT3")
   } else {
-    pd.ETA.matrix <- data.frame(ETAVEGFR3BASE = 0,ETAVEGFR3MRT = 0,
-      ETASKITBASE = 0,ETASKITMRT = 0,ETASKITSLP = 0,ETAVEGFR3I50 = 0,
-      ETASKITI50 = 0,ETAKG = 0,ETAKRSKIT = 0,ETAKRD = 0,ETAOBASE = 0,
-      ETAANCBASE = 0,ETAANCMTT = 0,ETAANCEMAX = 0,ETAANCE50 = 0,ETABPBASE = 0,
-      ETABPSLP = 0,ETABPMRT = 0,ETAHFS0 = 0,ETAHFS1 = 0,ETAHFS2 = 0,ETAFAT0 = 0,
-      ETAFAT1 = 0,ETAFAT2 = 0,ETAFAT3 = 0)
+    pd.ETA.matrix <- data.frame(ETAVEGFBASE = 0,ETAVEGFMRT = 0,ETAVEGFSLP = 0,
+      ETAVEGFR2BASE = 0,ETAVEGFR2MRT = 0,ETAVEGFR3BASE = 0,ETAVEGFR3MRT = 0,
+      ETASKITBASE = 0,ETASKITMRT = 0,ETASKITSLP = 0,ETAVEGFI50 = 0,
+      ETAVEGFR2I50 = 0,ETAVEGFR3I50 = 0,ETASKITI50 = 0,ETAKG = 0,ETAKRSKIT = 0,
+      ETAKRD = 0,ETAOBASE = 0,ETAANCBASE = 0,ETAANCMTT = 0,ETAANCEMAX = 0,
+      ETAANCE50 = 0,ETABPBASE = 0,ETABPSLP = 0,ETABPMRT = 0,ETAHFS0 = 0,
+      ETAHFS1 = 0,ETAHFS2 = 0,ETAFAT0 = 0,ETAFAT1 = 0,ETAFAT2 = 0,ETAFAT3 = 0)
   }
 # Input data frame for simulation
   pkpd.data <- pk.data[c("SIM","ID","time","cyc","amt","WT","OBASE","HFSBASE",
@@ -99,7 +102,7 @@
 # Clean up and save the PD simulated data
   output.pd.data <- pd.data[c("SIM","ID","time","cyc","amt","IPREP",
     "IPREM","IPRE","AUC24","TUMOUR","ANC","BP","WT","OBASE","HFSBASE","FATBASE",
-    "IPRE_VEGFR3","IPRE_SKIT","HFS","FAT","status")]
+    "IPRE_VEGF","IPRE_VEGFR2","IPRE_VEGFR3","IPRE_SKIT","HFS","FAT","status")]
   write.csv(output.pd.data,file = paste0(study.name,"_pd_data.csv"),
     quote = FALSE,row.names = FALSE)
 
@@ -137,12 +140,58 @@
     ggsave(plot = plotobj1,
       filename = paste0(study.name,"_overallsurvival.png"),
       width = 20,height = 15,unit = "cm",dpi = 300)
+# Summarise and plot VEGF over time
+  summary.VEGF <- ddply(pd.data, .(time),
+    function(pd.data) graded.summary(pd.data$IPRE_VEGF))
+# Plot median and confidence intervals and facet
+  plotobj2b <- NULL
+  plotobj2b <- ggplot(summary.VEGF[summary.VEGF$time <= 18*7*24,])
+  plotobj2b <- plotobj2b + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2b <- plotobj2b + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2b <- plotobj2b + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2b <- plotobj2b + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2b <- plotobj2b + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2b <- plotobj2b + geom_line(aes(x = time/24/7,y = med),
+    colour = "skyblue4")
+  plotobj2b <- plotobj2b + scale_y_log10("VEGF Concentration (pg/mL)")
+  plotobj2b <- plotobj2b + scale_x_continuous("Time (weeks)")
+  print(plotobj2b)
+  ggsave(plot = plotobj2b,filename = paste0(study.name,"_VEGF.png"),
+    width = 30,height = 15,unit = "cm",dpi = 300)
+# Summarise and plot VEGF over time
+  summary.VEGFR2 <- ddply(pd.data, .(time),
+    function(pd.data) graded.summary(pd.data$IPRE_VEGFR2))
+# Plot median and confidence intervals and facet
+  plotobj2c <- NULL
+  plotobj2c <- ggplot(summary.VEGFR2[summary.VEGFR2$time <= 18*7*24,])
+  plotobj2c <- plotobj2c + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
+    ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2c <- plotobj2c + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
+    ymax = CI80hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2c <- plotobj2c + geom_ribbon(aes(x = time/24/7,ymin = CI60lo,
+    ymax = CI60hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2c <- plotobj2c + geom_ribbon(aes(x = time/24/7,ymin = CI40lo,
+    ymax = CI40hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2c <- plotobj2c + geom_ribbon(aes(x = time/24/7,ymin = CI20lo,
+    ymax = CI20hi),fill = "skyblue4",alpha = 0.2)
+  plotobj2c <- plotobj2c + geom_line(aes(x = time/24/7,y = med),
+    colour = "skyblue4")
+  plotobj2c <- plotobj2c + scale_y_continuous("sVEGFR-2 Concentration (pg/mL)")
+  plotobj2c <- plotobj2c + scale_x_continuous("Time (weeks)")
+  print(plotobj2c)
+  ggsave(plot = plotobj2c,filename = paste0(study.name,"_VEGFR2.png"),
+    width = 30,height = 15,unit = "cm",dpi = 300)
 # Summarise and plot sVEGFR-3 over time
   summary.VEGFR3 <- ddply(pd.data, .(time),
     function(pd.data) graded.summary(pd.data$IPRE_VEGFR3))
 # Plot median and confidence intervals and facet
   plotobj2 <- NULL
-  plotobj2 <- ggplot(summary.VEGFR3[summary.VEGFR3$time <= 50*7*24,])
+  plotobj2 <- ggplot(summary.VEGFR3[summary.VEGFR3$time <= 18*7*24,])
   plotobj2 <- plotobj2 + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
     ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
   plotobj2 <- plotobj2 + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
@@ -166,7 +215,7 @@
     function(pd.data) graded.summary(pd.data$IPRE_SKIT))
 # Plot median and confidence intervals and facet
   plotobj3 <- NULL
-  plotobj3 <- ggplot(summary.SKIT[summary.SKIT$time <= 50*7*24,])
+  plotobj3 <- ggplot(summary.SKIT[summary.SKIT$time <= 18*7*24,])
   plotobj3 <- plotobj3 + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
     ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
   plotobj3 <- plotobj3 + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
@@ -190,7 +239,7 @@
     function(pd.data) graded.summary(pd.data$TUMOUR))
 # Plot median and confidence intervals and facet
   plotobj4 <- NULL
-  plotobj4 <- ggplot(summary.TUMOUR[summary.TUMOUR$time <= 50*7*24,])
+  plotobj4 <- ggplot(summary.TUMOUR[summary.TUMOUR$time <= 18*7*24,])
   plotobj4 <- plotobj4 + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
     ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
   plotobj4 <- plotobj4 + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
@@ -213,7 +262,7 @@
     function(pd.data) graded.summary(pd.data$ANC))
 # Plot median and confidence intervals and facet
   plotobj5 <- NULL
-  plotobj5 <- ggplot(summary.ANC[summary.ANC$time <= 50*7*24,])
+  plotobj5 <- ggplot(summary.ANC[summary.ANC$time <= 18*7*24,])
   plotobj5 <- plotobj5 + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
     ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
   plotobj5 <- plotobj5 + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,
@@ -236,7 +285,7 @@
     function(pd.data) graded.summary(pd.data$BP))
 # Plot median and confidence intervals and facet
   plotobj6 <- NULL
-  plotobj6 <- ggplot(summary.BP[summary.BP$time <= 50*7*24,])
+  plotobj6 <- ggplot(summary.BP[summary.BP$time <= 18*7*24,])
   plotobj6 <- plotobj6 + geom_ribbon(aes(x = time/24/7,ymin = CI90lo,
     ymax = CI90hi),fill = "skyblue4",alpha = 0.2)
   plotobj6 <- plotobj6 + geom_ribbon(aes(x = time/24/7,ymin = CI80lo,

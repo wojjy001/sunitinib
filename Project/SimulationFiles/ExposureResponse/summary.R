@@ -47,269 +47,269 @@
 # Tumour model, for example, doesn't extrapolate well beyond this time-point
   pd22.data <- pd.data[pd.data$time == 22*7*24,]
 
-# ------------------------------------------------------------------------------
-# Population Summaries
-# Tumour versus 24-hour AUC
-  plotobj1 <- NULL
-  plotobj1 <- ggplot(pd22.data)
-  plotobj1 <- plotobj1 + geom_boxplot(aes(x = AUC24r,y = TUMOUR,
-    colour = study,fill = study),alpha = 0.3)
-  plotobj1 <- plotobj1 + scale_y_continuous(
-    "Tumour (Sum of Longest Diameters, mm)",
-    breaks = seq(0,5000,100),labels = seq(0,5000,100))
-  plotobj1 <- plotobj1 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj1 <- plotobj1 + theme(legend.position = "none")
-  print(plotobj1)
-  ggsave(plot = plotobj1,filename = paste0("TUMOURvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# ANC versus 24-hour AUC
-  plotobj2 <- NULL
-  plotobj2 <- ggplot(pd22.data)
-  plotobj2 <- plotobj2 + geom_boxplot(aes(x = AUC24r,y = ANC,
-    colour = study,fill = study),alpha = 0.3)
-  plotobj2 <- plotobj2 + scale_y_log10("ANC (x10^9)",
-    breaks = c(0.1,0.3,1,3,10),labels = c(0.1,0.3,1,3,10))
-  plotobj2 <- plotobj2 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj2 <- plotobj2 + theme(legend.position = "none")
-  print(plotobj2)
-  ggsave(plot = plotobj2,filename = paste0("ANCvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# dBP versus 24-hour AUC
-  plotobj3 <- NULL
-  plotobj3 <- ggplot(pd22.data)
-  plotobj3 <- plotobj3 + geom_boxplot(aes(x = AUC24r,y = BP,
-    colour = study,fill = study),alpha = 0.3)
-  plotobj3 <- plotobj3 + scale_y_continuous("dBP (mmHg)",
-    breaks = seq(40,200,20),labels = seq(40,200,20))
-  plotobj3 <- plotobj3 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj3 <- plotobj3 + theme(legend.position = "none")
-  print(plotobj3)
-  ggsave(plot = plotobj3,filename = paste0("BPvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# sVEGFR-3 versus 24-hour AUC
-  plotobj4 <- NULL
-  plotobj4 <- ggplot(pd22.data)
-  plotobj4 <- plotobj4 + geom_boxplot(aes(x = AUC24r,y = IPRE_VEGFR3,
-    colour = study,fill = study),alpha = 0.3)
-  plotobj4 <- plotobj4 + scale_y_continuous("sVEGFR-3 (pg/mL)")
-  plotobj4 <- plotobj4 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj4 <- plotobj4 + theme(legend.position = "none")
-  print(plotobj4)
-  ggsave(plot = plotobj4,filename = paste0("VEGFR3vsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# sKIT versus 24-hour AUC
-  plotobj5 <- NULL
-  plotobj5 <- ggplot(pd22.data)
-  plotobj5 <- plotobj5 + geom_boxplot(aes(x = AUC24r,y = IPRE_SKIT,
-    colour = study,fill = study),alpha = 0.3)
-  plotobj5 <- plotobj5 + scale_y_continuous("sKIT (pg/mL)")
-  plotobj5 <- plotobj5 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj5 <- plotobj5 + theme(legend.position = "none")
-  print(plotobj5)
-  ggsave(plot = plotobj5,filename = paste0("SKITvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# Hand-Foot Syndrome Grade versus 24-hour AUC
-  pd22.data$HFSf <- as.factor(pd22.data$HFS)
-  plotobj6 <- NULL
-  plotobj6 <- ggplot(pd22.data)
-  plotobj6 <- plotobj6 + geom_bar(aes(x = AUC24r,fill = HFSf),stat = "count")
-  plotobj6 <- plotobj6 + scale_y_continuous("Number of Individuals")
-  plotobj6 <- plotobj6 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj6 <- plotobj6 + labs(fill = "Hand-Foot\nSyndrome\nGrade")
-  print(plotobj6)
-  ggsave(plot = plotobj6,filename = paste0("HFSvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# Fatigue Grade versus 24-hour AUC
-  pd22.data$FATf <- as.factor(pd22.data$FAT)
-  plotobj7 <- NULL
-  plotobj7 <- ggplot(pd22.data)
-  plotobj7 <- plotobj7 + geom_bar(aes(x = AUC24r,fill = FATf),stat = "count")
-  plotobj7 <- plotobj7 + scale_y_continuous("Number of Individuals")
-  plotobj7 <- plotobj7 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
-    labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
-  plotobj7 <- plotobj7 + labs(fill = "Fatigue\nGrade")
-  print(plotobj7)
-  ggsave(plot = plotobj7,filename = paste0("FATvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-
-# ------------------------------------------------------------------------------
-# Overall survival
-# For overall survival plots, calculate the proportion of individuals alive
-# at each time-point
-# Kaplan Meier Plot for survival confidence intervals
-# All individuals have the same start time, i.e., time == 0
-  pd.data$start <- 0
-  pd.data <- ddply(pd.data, .(SIM,ID,study), stop.time.function) # For each
-  # individual calculate their stop time
-  km.data <- ddply(pd.data, .(SIM,ID,study), headperID)
-  km.data <- km.data[c("SIM","ID","study","start","stop","event")]
-  S <- Surv(time = km.data$start,time2 = km.data$stop,event = km.data$event)
-  result <- survfit(formula = S ~ study,data = km.data)
-  cols <- lapply(2:12, function(x) summary(result)[x])
-  surv.data <- do.call(data.frame, cols)
-  surv.data$strata <- as.factor(surv.data$strata)
-  levels(surv.data$strata) <- levels(as.factor(pd22.data$AUC24r))
-# Plot overall survival
-  plotobj8 <- NULL
-  plotobj8 <- ggplot()
-  plotobj8 <- plotobj8 + geom_ribbon(aes(x = time/24/7,ymin = lower,
-    ymax = upper,fill = strata),data = surv.data,alpha = 0.2)
-  plotobj8 <- plotobj8 + geom_line(aes(x = time/24/7,y = surv,
-    colour = strata),data = surv.data)
-  plotobj8 <- plotobj8 + scale_y_continuous("Probability of Survival",
-    lim = c(0,1),
-    breaks = seq(from = 0,to = 1,by = 0.2),
-    labels = seq(from = 0,to = 1,by = 0.2))
-  plotobj8 <- plotobj8 + scale_x_continuous("Time (weeks)",
-    breaks = seq(from = 0,to = max(surv.data$time)/24/7,by = 30),
-    lim = c(0,max(surv.data$time/24/7)))
-  plotobj8 <- plotobj8 + labs(fill = "Target 24-hour\nAUC (mg*h/L)",
-    colour = "Target 24-hour\nAUC (mg*h/L)")
-  print(plotobj8)
-  ggsave(plot = plotobj8,filename = paste0("OSvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-
-# ------------------------------------------------------------------------------
-# Individual Summaries
-# Find 12 random individuals
-  rand.ind <- sample(unique(pd.data$ID),12)
-  rand.data <- pd22.data[pd22.data$ID %in% rand.ind,]
-
-# Tumour versus 24-hour AUC
-  plotobj9 <- NULL
-  plotobj9 <- ggplot(rand.data)
-  plotobj9 <- plotobj9 + geom_smooth(aes(x = AUC24r,y = TUMOUR),
-    method = "lm",se = F,colour = "brown3")
-  plotobj9 <- plotobj9 + geom_point(aes(x = AUC24r,y = TUMOUR),
-    colour = "skyblue4",size = 2)
-  plotobj9 <- plotobj9 + scale_y_continuous(
-    "Tumour (Sum of Longest Diameters, mm)",
-    breaks = seq(0,5000,100),labels = seq(0,5000,100))
-  plotobj9 <- plotobj9 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj9 <- plotobj9 + facet_wrap(~ID)
-  print(plotobj9)
-  ggsave(plot = plotobj9,filename = paste0("12rand_TUMOURvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# ANC versus 24-hour AUC
-  plotobj10 <- NULL
-  plotobj10 <- ggplot(rand.data)
-  plotobj10 <- plotobj10 + geom_smooth(aes(x = AUC24r,y = ANC),
-    method = "lm",se = F,colour = "brown3")
-  plotobj10 <- plotobj10 + geom_point(aes(x = AUC24r,y = ANC),
-    colour = "skyblue4",size = 2)
-  plotobj10 <- plotobj10 + scale_y_continuous(
-    "ANC (x10^9)",
-    breaks = seq(1,10,1),labels = seq(1,10,1))
-  plotobj10 <- plotobj10 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj10 <- plotobj10 + facet_wrap(~ID)
-  print(plotobj10)
-  ggsave(plot = plotobj10,filename = paste0("12rand_ANCvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# dBP versus 24-hour AUC
-  plotobj11 <- NULL
-  plotobj11 <- ggplot(rand.data)
-  plotobj11 <- plotobj11 + geom_smooth(aes(x = AUC24r,y = BP),
-    method = "lm",se = F,colour = "brown3")
-  plotobj11 <- plotobj11 + geom_point(aes(x = AUC24r,y = BP),
-    colour = "skyblue4",size = 2)
-  plotobj11 <- plotobj11 + scale_y_continuous("dBP (mmHg)",
-    breaks = seq(40,200,10),labels = seq(40,200,10))
-  plotobj11 <- plotobj11 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj11 <- plotobj11 + facet_wrap(~ID)
-  print(plotobj11)
-  ggsave(plot = plotobj11,filename = paste0("12rand_BPvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# sVEGFR-3 versus 24-hour AUC
-  plotobj12 <- NULL
-  plotobj12 <- ggplot(rand.data)
-  plotobj12 <- plotobj12 + geom_smooth(aes(x = AUC24r,y = IPRE_VEGFR3),
-    method = "lm",se = F,colour = "brown3")
-  plotobj12 <- plotobj12 + geom_point(aes(x = AUC24r,y = IPRE_VEGFR3),
-    colour = "skyblue4",size = 2)
-  plotobj12 <- plotobj12 + scale_y_continuous("sVEGFR-3 (pg/mL)")
-  plotobj12 <- plotobj12 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj12 <- plotobj12 + facet_wrap(~ID)
-  print(plotobj12)
-  ggsave(plot = plotobj12,filename = paste0("12rand_VEGFR3vsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# sKIT versus 24-hour AUC
-  plotobj13 <- NULL
-  plotobj13 <- ggplot(rand.data)
-  plotobj13 <- plotobj13 + geom_smooth(aes(x = AUC24r,y = IPRE_SKIT),
-    method = "lm",se = F,colour = "brown3")
-  plotobj13 <- plotobj13 + geom_point(aes(x = AUC24r,y = IPRE_SKIT),
-    colour = "skyblue4",size = 2)
-  plotobj13 <- plotobj13 + scale_y_continuous("sKIT (pg/mL)")
-  plotobj13 <- plotobj13 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj13 <- plotobj13 + facet_wrap(~ID)
-  print(plotobj13)
-  ggsave(plot = plotobj13,filename = paste0("12rand_SKITvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# Hand-foot syndrome grade versus 24-hour AUC
-  plotobj16 <- NULL
-  plotobj16 <- ggplot(rand.data)
-  plotobj16 <- plotobj16 + geom_step(aes(x = AUC24r,y = HFS),
-    colour = "skyblue4",size = 2)
-  plotobj16 <- plotobj16 + scale_y_continuous("Hand-Foot Syndrome Grade",
-    lim = c(0,4),breaks = c(0,1,2,3,4),labels = c(0,1,2,3,4))
-  plotobj16 <- plotobj16 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj16 <- plotobj16 + facet_wrap(~ID)
-  print(plotobj16)
-  ggsave(plot = plotobj16,filename = paste0("12rand_HFSvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
-# Fatigue grade versus 24-hour AUC
-  plotobj15 <- NULL
-  plotobj15 <- ggplot(rand.data)
-  plotobj15 <- plotobj15 + geom_step(aes(x = AUC24r,y = FAT),
-    colour = "skyblue4",size = 2)
-  plotobj15 <- plotobj15 + scale_y_continuous("Fatigue Grade",
-    lim = c(0,4),breaks = c(0,1,2,3,4),labels = c(0,1,2,3,4))
-  plotobj15 <- plotobj15 + scale_x_continuous(
-    "Total Sunitinib 24-hour AUC (mg*h/L)",
-    breaks = c(1,1.5,2,3),
-    labels = c(1,1.5,2,3))
-  plotobj15 <- plotobj15 + facet_wrap(~ID)
-  print(plotobj15)
-  ggsave(plot = plotobj15,filename = paste0("12rand_FATvsAUC24.png"),
-    height = 15,width = 20,units = "cm",dpi = 300)
+# # ------------------------------------------------------------------------------
+# # Population Summaries
+# # Tumour versus 24-hour AUC
+#   plotobj1 <- NULL
+#   plotobj1 <- ggplot(pd22.data)
+#   plotobj1 <- plotobj1 + geom_boxplot(aes(x = AUC24r,y = TUMOUR,
+#     colour = study,fill = study),alpha = 0.3)
+#   plotobj1 <- plotobj1 + scale_y_continuous(
+#     "Tumour (Sum of Longest Diameters, mm)",
+#     breaks = seq(0,5000,100),labels = seq(0,5000,100))
+#   plotobj1 <- plotobj1 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj1 <- plotobj1 + theme(legend.position = "none")
+#   print(plotobj1)
+#   ggsave(plot = plotobj1,filename = paste0("TUMOURvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # ANC versus 24-hour AUC
+#   plotobj2 <- NULL
+#   plotobj2 <- ggplot(pd22.data)
+#   plotobj2 <- plotobj2 + geom_boxplot(aes(x = AUC24r,y = ANC,
+#     colour = study,fill = study),alpha = 0.3)
+#   plotobj2 <- plotobj2 + scale_y_log10("ANC (x10^9)",
+#     breaks = c(0.1,0.3,1,3,10),labels = c(0.1,0.3,1,3,10))
+#   plotobj2 <- plotobj2 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj2 <- plotobj2 + theme(legend.position = "none")
+#   print(plotobj2)
+#   ggsave(plot = plotobj2,filename = paste0("ANCvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # dBP versus 24-hour AUC
+#   plotobj3 <- NULL
+#   plotobj3 <- ggplot(pd22.data)
+#   plotobj3 <- plotobj3 + geom_boxplot(aes(x = AUC24r,y = BP,
+#     colour = study,fill = study),alpha = 0.3)
+#   plotobj3 <- plotobj3 + scale_y_continuous("dBP (mmHg)",
+#     breaks = seq(40,200,20),labels = seq(40,200,20))
+#   plotobj3 <- plotobj3 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj3 <- plotobj3 + theme(legend.position = "none")
+#   print(plotobj3)
+#   ggsave(plot = plotobj3,filename = paste0("BPvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # sVEGFR-3 versus 24-hour AUC
+#   plotobj4 <- NULL
+#   plotobj4 <- ggplot(pd22.data)
+#   plotobj4 <- plotobj4 + geom_boxplot(aes(x = AUC24r,y = IPRE_VEGFR3,
+#     colour = study,fill = study),alpha = 0.3)
+#   plotobj4 <- plotobj4 + scale_y_continuous("sVEGFR-3 (pg/mL)")
+#   plotobj4 <- plotobj4 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj4 <- plotobj4 + theme(legend.position = "none")
+#   print(plotobj4)
+#   ggsave(plot = plotobj4,filename = paste0("VEGFR3vsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # sKIT versus 24-hour AUC
+#   plotobj5 <- NULL
+#   plotobj5 <- ggplot(pd22.data)
+#   plotobj5 <- plotobj5 + geom_boxplot(aes(x = AUC24r,y = IPRE_SKIT,
+#     colour = study,fill = study),alpha = 0.3)
+#   plotobj5 <- plotobj5 + scale_y_continuous("sKIT (pg/mL)")
+#   plotobj5 <- plotobj5 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj5 <- plotobj5 + theme(legend.position = "none")
+#   print(plotobj5)
+#   ggsave(plot = plotobj5,filename = paste0("SKITvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # Hand-Foot Syndrome Grade versus 24-hour AUC
+#   pd22.data$HFSf <- as.factor(pd22.data$HFS)
+#   plotobj6 <- NULL
+#   plotobj6 <- ggplot(pd22.data)
+#   plotobj6 <- plotobj6 + geom_bar(aes(x = AUC24r,fill = HFSf),stat = "count")
+#   plotobj6 <- plotobj6 + scale_y_continuous("Number of Individuals")
+#   plotobj6 <- plotobj6 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj6 <- plotobj6 + labs(fill = "Hand-Foot\nSyndrome\nGrade")
+#   print(plotobj6)
+#   ggsave(plot = plotobj6,filename = paste0("HFSvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # Fatigue Grade versus 24-hour AUC
+#   pd22.data$FATf <- as.factor(pd22.data$FAT)
+#   plotobj7 <- NULL
+#   plotobj7 <- ggplot(pd22.data)
+#   plotobj7 <- plotobj7 + geom_bar(aes(x = AUC24r,fill = FATf),stat = "count")
+#   plotobj7 <- plotobj7 + scale_y_continuous("Number of Individuals")
+#   plotobj7 <- plotobj7 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.2,1.4,1.5,1.6,1.8,2,3),
+#     labels = c(1,1.2,1.4,1.5,1.6,1.8,2,3))
+#   plotobj7 <- plotobj7 + labs(fill = "Fatigue\nGrade")
+#   print(plotobj7)
+#   ggsave(plot = plotobj7,filename = paste0("FATvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+#
+# # ------------------------------------------------------------------------------
+# # Overall survival
+# # For overall survival plots, calculate the proportion of individuals alive
+# # at each time-point
+# # Kaplan Meier Plot for survival confidence intervals
+# # All individuals have the same start time, i.e., time == 0
+#   pd.data$start <- 0
+#   pd.data <- ddply(pd.data, .(SIM,ID,study), stop.time.function) # For each
+#   # individual calculate their stop time
+#   km.data <- ddply(pd.data, .(SIM,ID,study), headperID)
+#   km.data <- km.data[c("SIM","ID","study","start","stop","event")]
+#   S <- Surv(time = km.data$start,time2 = km.data$stop,event = km.data$event)
+#   result <- survfit(formula = S ~ study,data = km.data)
+#   cols <- lapply(2:12, function(x) summary(result)[x])
+#   surv.data <- do.call(data.frame, cols)
+#   surv.data$strata <- as.factor(surv.data$strata)
+#   levels(surv.data$strata) <- levels(as.factor(pd22.data$AUC24r))
+# # Plot overall survival
+#   plotobj8 <- NULL
+#   plotobj8 <- ggplot()
+#   plotobj8 <- plotobj8 + geom_ribbon(aes(x = time/24/7,ymin = lower,
+#     ymax = upper,fill = strata),data = surv.data,alpha = 0.2)
+#   plotobj8 <- plotobj8 + geom_line(aes(x = time/24/7,y = surv,
+#     colour = strata),data = surv.data)
+#   plotobj8 <- plotobj8 + scale_y_continuous("Probability of Survival",
+#     lim = c(0,1),
+#     breaks = seq(from = 0,to = 1,by = 0.2),
+#     labels = seq(from = 0,to = 1,by = 0.2))
+#   plotobj8 <- plotobj8 + scale_x_continuous("Time (weeks)",
+#     breaks = seq(from = 0,to = max(surv.data$time)/24/7,by = 30),
+#     lim = c(0,max(surv.data$time/24/7)))
+#   plotobj8 <- plotobj8 + labs(fill = "Target 24-hour\nAUC (mg*h/L)",
+#     colour = "Target 24-hour\nAUC (mg*h/L)")
+#   print(plotobj8)
+#   ggsave(plot = plotobj8,filename = paste0("OSvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+#
+# # ------------------------------------------------------------------------------
+# # Individual Summaries
+# # Find 12 random individuals
+#   rand.ind <- sample(unique(pd.data$ID),12)
+#   rand.data <- pd22.data[pd22.data$ID %in% rand.ind,]
+#
+# # Tumour versus 24-hour AUC
+#   plotobj9 <- NULL
+#   plotobj9 <- ggplot(rand.data)
+#   plotobj9 <- plotobj9 + geom_smooth(aes(x = AUC24r,y = TUMOUR),
+#     method = "lm",se = F,colour = "brown3")
+#   plotobj9 <- plotobj9 + geom_point(aes(x = AUC24r,y = TUMOUR),
+#     colour = "skyblue4",size = 2)
+#   plotobj9 <- plotobj9 + scale_y_continuous(
+#     "Tumour (Sum of Longest Diameters, mm)",
+#     breaks = seq(0,5000,100),labels = seq(0,5000,100))
+#   plotobj9 <- plotobj9 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj9 <- plotobj9 + facet_wrap(~ID)
+#   print(plotobj9)
+#   ggsave(plot = plotobj9,filename = paste0("12rand_TUMOURvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # ANC versus 24-hour AUC
+#   plotobj10 <- NULL
+#   plotobj10 <- ggplot(rand.data)
+#   plotobj10 <- plotobj10 + geom_smooth(aes(x = AUC24r,y = ANC),
+#     method = "lm",se = F,colour = "brown3")
+#   plotobj10 <- plotobj10 + geom_point(aes(x = AUC24r,y = ANC),
+#     colour = "skyblue4",size = 2)
+#   plotobj10 <- plotobj10 + scale_y_continuous(
+#     "ANC (x10^9)",
+#     breaks = seq(1,10,1),labels = seq(1,10,1))
+#   plotobj10 <- plotobj10 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj10 <- plotobj10 + facet_wrap(~ID)
+#   print(plotobj10)
+#   ggsave(plot = plotobj10,filename = paste0("12rand_ANCvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # dBP versus 24-hour AUC
+#   plotobj11 <- NULL
+#   plotobj11 <- ggplot(rand.data)
+#   plotobj11 <- plotobj11 + geom_smooth(aes(x = AUC24r,y = BP),
+#     method = "lm",se = F,colour = "brown3")
+#   plotobj11 <- plotobj11 + geom_point(aes(x = AUC24r,y = BP),
+#     colour = "skyblue4",size = 2)
+#   plotobj11 <- plotobj11 + scale_y_continuous("dBP (mmHg)",
+#     breaks = seq(40,200,10),labels = seq(40,200,10))
+#   plotobj11 <- plotobj11 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj11 <- plotobj11 + facet_wrap(~ID)
+#   print(plotobj11)
+#   ggsave(plot = plotobj11,filename = paste0("12rand_BPvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # sVEGFR-3 versus 24-hour AUC
+#   plotobj12 <- NULL
+#   plotobj12 <- ggplot(rand.data)
+#   plotobj12 <- plotobj12 + geom_smooth(aes(x = AUC24r,y = IPRE_VEGFR3),
+#     method = "lm",se = F,colour = "brown3")
+#   plotobj12 <- plotobj12 + geom_point(aes(x = AUC24r,y = IPRE_VEGFR3),
+#     colour = "skyblue4",size = 2)
+#   plotobj12 <- plotobj12 + scale_y_continuous("sVEGFR-3 (pg/mL)")
+#   plotobj12 <- plotobj12 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj12 <- plotobj12 + facet_wrap(~ID)
+#   print(plotobj12)
+#   ggsave(plot = plotobj12,filename = paste0("12rand_VEGFR3vsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # sKIT versus 24-hour AUC
+#   plotobj13 <- NULL
+#   plotobj13 <- ggplot(rand.data)
+#   plotobj13 <- plotobj13 + geom_smooth(aes(x = AUC24r,y = IPRE_SKIT),
+#     method = "lm",se = F,colour = "brown3")
+#   plotobj13 <- plotobj13 + geom_point(aes(x = AUC24r,y = IPRE_SKIT),
+#     colour = "skyblue4",size = 2)
+#   plotobj13 <- plotobj13 + scale_y_continuous("sKIT (pg/mL)")
+#   plotobj13 <- plotobj13 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj13 <- plotobj13 + facet_wrap(~ID)
+#   print(plotobj13)
+#   ggsave(plot = plotobj13,filename = paste0("12rand_SKITvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # Hand-foot syndrome grade versus 24-hour AUC
+#   plotobj16 <- NULL
+#   plotobj16 <- ggplot(rand.data)
+#   plotobj16 <- plotobj16 + geom_step(aes(x = AUC24r,y = HFS),
+#     colour = "skyblue4",size = 2)
+#   plotobj16 <- plotobj16 + scale_y_continuous("Hand-Foot Syndrome Grade",
+#     lim = c(0,4),breaks = c(0,1,2,3,4),labels = c(0,1,2,3,4))
+#   plotobj16 <- plotobj16 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj16 <- plotobj16 + facet_wrap(~ID)
+#   print(plotobj16)
+#   ggsave(plot = plotobj16,filename = paste0("12rand_HFSvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
+# # Fatigue grade versus 24-hour AUC
+#   plotobj15 <- NULL
+#   plotobj15 <- ggplot(rand.data)
+#   plotobj15 <- plotobj15 + geom_step(aes(x = AUC24r,y = FAT),
+#     colour = "skyblue4",size = 2)
+#   plotobj15 <- plotobj15 + scale_y_continuous("Fatigue Grade",
+#     lim = c(0,4),breaks = c(0,1,2,3,4),labels = c(0,1,2,3,4))
+#   plotobj15 <- plotobj15 + scale_x_continuous(
+#     "Total Sunitinib 24-hour AUC (mg*h/L)",
+#     breaks = c(1,1.5,2,3),
+#     labels = c(1,1.5,2,3))
+#   plotobj15 <- plotobj15 + facet_wrap(~ID)
+#   print(plotobj15)
+#   ggsave(plot = plotobj15,filename = paste0("12rand_FATvsAUC24.png"),
+#     height = 15,width = 20,units = "cm",dpi = 300)
 
 # ------------------------------------------------------------------------------
 # Increasing dose for efficacy
@@ -326,14 +326,20 @@
     BP.ratio <- subset.data$BP[subset.data$AUC24r == auc2]/
       subset.data$BP[subset.data$AUC24r == auc1]
     BP.ratio <- round(BP.ratio/0.005)*0.005-1
+    IPRE_VEGF.ratio <- subset.data$IPRE_VEGF[subset.data$AUC24r == auc2]/
+      subset.data$IPRE_VEGF[subset.data$AUC24r == auc1]
+    IPRE_VEGF.ratio <- round(IPRE_VEGF.ratio/0.005)*0.005-1
+    IPRE_VEGFR2.ratio <- subset.data$IPRE_VEGFR2[subset.data$AUC24r == auc2]/
+      subset.data$IPRE_VEGFR2[subset.data$AUC24r == auc1]
+    IPRE_VEGFR2.ratio <- round(IPRE_VEGFR2.ratio/0.005)*0.005-1
     IPRE_VEGFR3.ratio <- subset.data$IPRE_VEGFR3[subset.data$AUC24r == auc2]/
       subset.data$IPRE_VEGFR3[subset.data$AUC24r == auc1]
     IPRE_VEGFR3.ratio <- round(IPRE_VEGFR3.ratio/0.005)*0.005-1
     IPRE_SKIT.ratio <- subset.data$IPRE_SKIT[subset.data$AUC24r == auc2]/
       subset.data$IPRE_SKIT[subset.data$AUC24r == auc1]
     IPRE_SKIT.ratio <- round(IPRE_SKIT.ratio/0.005)*0.005-1
-    result <- data.frame(TUMOUR.ratio,ANC.ratio,BP.ratio,IPRE_VEGFR3.ratio,
-      IPRE_SKIT.ratio)
+    result <- data.frame(TUMOUR.ratio,ANC.ratio,BP.ratio,IPRE_VEGF.ratio,
+      IPRE_VEGFR2.ratio,IPRE_VEGFR3.ratio,IPRE_SKIT.ratio)
   }
   ratio.data <- ddply(subset.data, .(SIM,ID), pd.ratio)
 
@@ -345,6 +351,12 @@
     anc.success <- length(ratio.data$ANC.ratio[ratio.data$ANC.ratio <=
       sig])/1000
     bp.success <- length(ratio.data$BP.ratio[ratio.data$BP.ratio >= sig])/1000
+    vegf.success <-
+      length(ratio.data$IPRE_VEGF.ratio[ratio.data$IPRE_VEGF.ratio >=
+      sig])/1000
+    vegfr2.success <-
+      length(ratio.data$IPRE_VEGFR2.ratio[ratio.data$IPRE_VEGFR2.ratio <=
+      sig])/1000
     vegfr3.success <-
       length(ratio.data$IPRE_VEGFR3.ratio[ratio.data$IPRE_VEGFR3.ratio <=
       sig])/1000
@@ -352,7 +364,7 @@
       length(ratio.data$IPRE_SKIT.ratio[ratio.data$IPRE_SKIT.ratio <=
       sig])/1000
     result <- data.frame(sig,tumour.success,anc.success,bp.success,
-      vegfr3.success,skit.success)
+      vegf.success,vegfr2.success,vegfr3.success,skit.success)
   }
   success.data <- ldply(sig, success.pro)
   # success.title <- paste0(
@@ -371,6 +383,12 @@
   plotobj16 <- plotobj16 + geom_line(aes(x = sig*100,y = bp.success*100,
     colour = "dBP"),
     data = success.data[success.data$sig >= 0,])
+  plotobj16 <- plotobj16 + geom_line(aes(x = sig*100,y = vegf.success*100,
+    colour = "VEGF"),
+    data = success.data[success.data$sig >= 0,])
+  plotobj16 <- plotobj16 + geom_line(aes(x = sig*100,y = vegfr2.success*100,
+    colour = "sVEGFR-2"),
+    data = success.data[success.data$sig <= 0,])
   plotobj16 <- plotobj16 + geom_line(aes(x = sig*100,y = vegfr3.success*100,
     colour = "sVEGFR-3"),
     data = success.data[success.data$sig <= 0,])
@@ -407,14 +425,20 @@
     BP.ratio <- subset.data$BP[subset.data$AUC24r == auc2]/
       subset.data$BP[subset.data$AUC24r == auc1]
     BP.ratio <- round(BP.ratio/0.005)*0.005-1
+    IPRE_VEGF.ratio <- subset.data$IPRE_VEGF[subset.data$AUC24r == auc2]/
+      subset.data$IPRE_VEGF[subset.data$AUC24r == auc1]
+    IPRE_VEGF.ratio <- round(IPRE_VEGF.ratio/0.005)*0.005-1
+    IPRE_VEGFR2.ratio <- subset.data$IPRE_VEGFR2[subset.data$AUC24r == auc2]/
+      subset.data$IPRE_VEGFR2[subset.data$AUC24r == auc1]
+    IPRE_VEGFR2.ratio <- round(IPRE_VEGFR2.ratio/0.005)*0.005-1
     IPRE_VEGFR3.ratio <- subset.data$IPRE_VEGFR3[subset.data$AUC24r == auc2]/
       subset.data$IPRE_VEGFR3[subset.data$AUC24r == auc1]
     IPRE_VEGFR3.ratio <- round(IPRE_VEGFR3.ratio/0.005)*0.005-1
     IPRE_SKIT.ratio <- subset.data$IPRE_SKIT[subset.data$AUC24r == auc2]/
       subset.data$IPRE_SKIT[subset.data$AUC24r == auc1]
     IPRE_SKIT.ratio <- round(IPRE_SKIT.ratio/0.005)*0.005-1
-    result <- data.frame(TUMOUR.ratio,ANC.ratio,BP.ratio,IPRE_VEGFR3.ratio,
-      IPRE_SKIT.ratio)
+    result <- data.frame(TUMOUR.ratio,ANC.ratio,BP.ratio,IPRE_VEGF.ratio,
+      IPRE_VEGFR2.ratio,IPRE_VEGFR3.ratio,IPRE_SKIT.ratio)
   }
   ratio.data <- ddply(subset.data, .(SIM,ID), pd.ratio)
 
@@ -426,14 +450,19 @@
     anc.success <- length(ratio.data$ANC.ratio[ratio.data$ANC.ratio >=
       sig])/1000
     bp.success <- length(ratio.data$BP.ratio[ratio.data$BP.ratio <= sig])/1000
+    vegf.success <-
+      length(ratio.data$IPRE_VEGF.ratio[ratio.data$IPRE_VEGF.ratio <= sig])/1000
+    vegfr2.success <-
+      length(ratio.data$IPRE_VEGFR2.ratio[ratio.data$IPRE_VEGFR2.ratio >=
+      sig])/1000
     vegfr3.success <-
       length(ratio.data$IPRE_VEGFR3.ratio[ratio.data$IPRE_VEGFR3.ratio >=
       sig])/1000
     skit.success <-
       length(ratio.data$IPRE_SKIT.ratio[ratio.data$IPRE_SKIT.ratio >=
       sig])/1000
-    result <- data.frame(sig,tumour.success,anc.success,bp.success,
-      vegfr3.success,skit.success)
+    result <- data.frame(sig,tumour.success,anc.success,bp.success,vegf.success,
+      vegfr2.success,vegfr3.success,skit.success)
   }
   success.data <- ldply(sig, success.pro)
   # success.title <- paste0(
@@ -452,6 +481,12 @@
   plotobj17 <- plotobj17 + geom_line(aes(x = sig*100,y = bp.success*100,
     colour = "dBP"),
     data = success.data[success.data$sig <= 0,])
+  plotobj17 <- plotobj17 + geom_line(aes(x = sig*100,y = vegf.success*100,
+    colour = "VEGF"),
+    data = success.data[success.data$sig <= 0,])
+  plotobj17 <- plotobj17 + geom_line(aes(x = sig*100,y = vegfr2.success*100,
+    colour = "sVEGFR-2"),
+    data = success.data[success.data$sig >= 0,])
   plotobj17 <- plotobj17 + geom_line(aes(x = sig*100,y = vegfr3.success*100,
     colour = "sVEGFR-3"),
     data = success.data[success.data$sig >= 0,])
@@ -488,14 +523,20 @@
     BP.ratio <- subset.data$BP[subset.data$AUC24r == auc2]/
       subset.data$BP[subset.data$AUC24r == auc1]
     BP.ratio <- round(BP.ratio/0.005)*0.005-1
+    IPRE_VEGF.ratio <- subset.data$IPRE_VEGF[subset.data$AUC24r == auc2]/
+      subset.data$IPRE_VEGF[subset.data$AUC24r == auc1]
+    IPRE_VEGF.ratio <- round(IPRE_VEGF.ratio/0.005)*0.005-1
+    IPRE_VEGFR2.ratio <- subset.data$IPRE_VEGFR2[subset.data$AUC24r == auc2]/
+      subset.data$IPRE_VEGFR2[subset.data$AUC24r == auc1]
+    IPRE_VEGFR2.ratio <- round(IPRE_VEGFR2.ratio/0.005)*0.005-1
     IPRE_VEGFR3.ratio <- subset.data$IPRE_VEGFR3[subset.data$AUC24r == auc2]/
       subset.data$IPRE_VEGFR3[subset.data$AUC24r == auc1]
     IPRE_VEGFR3.ratio <- round(IPRE_VEGFR3.ratio/0.005)*0.005-1
     IPRE_SKIT.ratio <- subset.data$IPRE_SKIT[subset.data$AUC24r == auc2]/
       subset.data$IPRE_SKIT[subset.data$AUC24r == auc1]
     IPRE_SKIT.ratio <- round(IPRE_SKIT.ratio/0.005)*0.005-1
-    result <- data.frame(TUMOUR.ratio,ANC.ratio,BP.ratio,IPRE_VEGFR3.ratio,
-      IPRE_SKIT.ratio)
+    result <- data.frame(TUMOUR.ratio,ANC.ratio,BP.ratio,IPRE_VEGF.ratio,
+      IPRE_VEGFR2.ratio,IPRE_VEGFR3.ratio,IPRE_SKIT.ratio)
   }
   ratio.data <- ddply(subset.data, .(SIM,ID), pd.ratio)
 
@@ -507,14 +548,18 @@
     anc.success <- length(ratio.data$ANC.ratio[ratio.data$ANC.ratio >=
       sig])/1000
     bp.success <- length(ratio.data$BP.ratio[ratio.data$BP.ratio <= sig])/1000
+    vegf.success <- length(ratio.data$IPRE_VEGF.ratio[ratio.data$IPRE_VEGF.ratio <= sig])/1000
+    vegfr2.success <-
+      length(ratio.data$IPRE_VEGFR2.ratio[ratio.data$IPRE_VEGFR2.ratio >=
+      sig])/1000
     vegfr3.success <-
       length(ratio.data$IPRE_VEGFR3.ratio[ratio.data$IPRE_VEGFR3.ratio >=
       sig])/1000
     skit.success <-
       length(ratio.data$IPRE_SKIT.ratio[ratio.data$IPRE_SKIT.ratio >=
       sig])/1000
-    result <- data.frame(sig,tumour.success,anc.success,bp.success,
-      vegfr3.success,skit.success)
+    result <- data.frame(sig,tumour.success,anc.success,bp.success,vegf.success,
+      vegfr2.success,vegfr3.success,skit.success)
   }
   success.data <- ldply(sig, success.pro)
   # success.title <- paste0(
@@ -533,6 +578,12 @@
   plotobj18 <- plotobj18 + geom_line(aes(x = sig*100,y = bp.success*100,
     colour = "dBP"),
     data = success.data[success.data$sig <= 0,])
+  plotobj18 <- plotobj18 + geom_line(aes(x = sig*100,y = vegf.success*100,
+    colour = "VEGF"),
+    data = success.data[success.data$sig <= 0,])
+  plotobj18 <- plotobj18 + geom_line(aes(x = sig*100,y = vegfr2.success*100,
+    colour = "sVEGFR-2"),
+    data = success.data[success.data$sig >= 0,])
   plotobj18 <- plotobj18 + geom_line(aes(x = sig*100,y = vegfr3.success*100,
     colour = "sVEGFR-3"),
     data = success.data[success.data$sig >= 0,])
@@ -559,7 +610,7 @@
 # Combine plots together
   plotobj19 <- plotobj16 + theme(legend.position = "none")
   plotobj20 <- plotobj17 + theme(legend.position = "none")
-  plotobj21 <- plotobj18 + guides(col = guide_legend(ncol = 5,byrow = TRUE))
+  plotobj21 <- plotobj18 + guides(col = guide_legend(ncol = 7,byrow = TRUE))
   plotobj22 <- grid.arrange(grobs = list(plotobj19,plotobj20,plotobj21),
     heights = c(5,5,6))
   print(plotobj22)
