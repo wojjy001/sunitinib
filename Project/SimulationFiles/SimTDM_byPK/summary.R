@@ -161,6 +161,23 @@
       height = 15,width = 25,units = "cm",dpi = 300)
 
 # ------------------------------------------------------------------------------
+# TDM based on IPRE
+# Calculate proportion of individuals above target
+  ntotal <- 1000
+  sim.data.list <- list(standard.pk,target.trough.exact.pk,target.auc.exact.pk,
+    target.trough.round.pk,target.auc.round.pk)
+  proIPRE.data <- ldply(sim.data.list,function(i) {
+    i$targetIPRE <- 0
+    i$targetIPRE[i$IPRE >= 50] <- 1
+    i.proIPRE <- summary.count.function(i$targetIPRE[i$time == 1656 & i$targetIPRE == 1])
+  })
+  print(proIPRE.data)
+# Calculate median and confidence intervals
+  summaryIPRE.data <- ldply(sim.data.list,function(i) {
+    i.summaryIPRE <- summary.function(i$IPRE[i$time == 1656])
+  })
+  print(summaryIPRE.data)
+
 # Plot concentrations
   # Exact doses
     plotobj3 <- NULL
@@ -211,7 +228,7 @@
   # Rounded doses
     plotobj4 <- NULL
     plotobj4 <- ggplot()
-    plotobj4 <- plotobj4 + ggtitle("(c)")
+    plotobj4 <- plotobj4 + ggtitle("(b)")
   # Standard
     plotobj4 <- plotobj4 + stat_summary(aes(x = time/24/7,y = IPRE,
       colour = "Standard Dosing (50 mg)"),data = standard.pk,
@@ -255,11 +272,28 @@
       height = 15,width = 25,units = "cm",dpi = 300)
 
 # ------------------------------------------------------------------------------
+# TDM based on AUC24
+# Calculate proportion of individuals above target
+  ntotal <- 1000
+  sim.data.list <- list(standard.pk,target.trough.exact.pk,target.auc.exact.pk,
+    target.trough.round.pk,target.auc.round.pk)
+  proAUC24.data <- ldply(sim.data.list,function(i) {
+    i$targetAUC24 <- 0
+    i$targetAUC24[i$AUC24 >= 1.5] <- 1
+    i.proAUC24 <- summary.count.function(i$targetAUC24[i$time == 1656 & i$targetAUC24 == 1])
+  })
+  print(proAUC24.data)
+# Calculate median and confidence intervals
+  summaryAUC24.data <- ldply(sim.data.list,function(i) {
+    i.summaryAUC24 <- summary.function(i$AUC24[i$time == 1656])
+  })
+  print(summaryAUC24.data)
+
 # Plot AUC
   # Exact doses
     plotobj5 <- NULL
     plotobj5 <- ggplot()
-    plotobj5 <- plotobj5 + ggtitle("(b)")
+    plotobj5 <- plotobj5 + ggtitle("(c)")
   # Standard
     plotobj5 <- plotobj5 + stat_summary(aes(x = time/24/7,y = AUC24,
       colour = "Standard Dosing (50 mg)"),data = standard.pk,
@@ -1006,7 +1040,7 @@
   plotobj21 <- plotobj21 + geom_line(aes(x = time/24/7,y = pro,
     colour = "Target AUC (1.5 mg*h/L)"),data = count.hfs.target.auc.exact.pd)
   plotobj21 <- plotobj21 + scale_y_continuous(
-    "Probability of Grade",
+    "Probability of Hand-Foot Syndrome Grade",
     lim = c(0,1),breaks = seq(0,1,0.5),labels = seq(0,1,0.5))
   plotobj21 <- plotobj21 + scale_x_continuous("Time (weeks)",
     lim = c(0,48),breaks = seq(0,48,6))
@@ -1033,7 +1067,7 @@
   plotobj22 <- plotobj22 + geom_line(aes(x = time/24/7,y = pro,
     colour = "Target AUC (1.5 mg*h/L)"),data = count.hfs.target.auc.round.pd)
   plotobj22 <- plotobj22 + scale_y_continuous(
-    "Probability of Grade",
+    "Probability of Hand-Foot Syndrome Grade",
     lim = c(0,1),breaks = seq(0,1,0.5),labels = seq(0,1,0.5))
   plotobj22 <- plotobj22 + scale_x_continuous("Time (weeks)",
     lim = c(0,48),breaks = seq(0,48,6))
@@ -1073,7 +1107,7 @@
   plotobj23 <- plotobj23 + geom_line(aes(x = time/24/7,y = pro,
     colour = "Target AUC (1.5 mg*h/L)"),data = count.fat.target.auc.exact.pd)
   plotobj23 <- plotobj23 + scale_y_continuous(
-    "Probability of Grade",
+    "Probability of Fatigue Grade",
     lim = c(0,1),breaks = seq(0,1,0.5),labels = seq(0,1,0.5))
   plotobj23 <- plotobj23 + scale_x_continuous("Time (weeks)",
     lim = c(0,48),breaks = seq(0,48,6))
@@ -1100,7 +1134,7 @@
   plotobj24 <- plotobj24 + geom_line(aes(x = time/24/7,y = pro,
     colour = "Target AUC (1.5 mg*h/L)"),data = count.fat.target.auc.round.pd)
   plotobj24 <- plotobj24 + scale_y_continuous(
-    "Probability of Grade",
+    "Probability of Fatigue Grade",
     lim = c(0,1),breaks = seq(0,1,0.5),labels = seq(0,1,0.5))
   plotobj24 <- plotobj24 + scale_x_continuous("Time (weeks)",
     lim = c(0,48),breaks = seq(0,48,6))
@@ -1116,7 +1150,7 @@
 # ------------------------------------------------------------------------------
 # Combine plots together
 # PK
-  plotobj25 <- grid.arrange(grobs = list(plotobj3,plotobj5,plotobj4,plotobj6),
+  plotobj25 <- grid.arrange(grobs = list(plotobj3,plotobj4,plotobj5,plotobj6),
     ncol = 2)
   ggsave(plot = plotobj25,filename = "IPRE_AUC24.png",
     dpi = 300,units = "cm",width = 17.4,height = 15)
